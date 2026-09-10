@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Transaction History - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="page-title-box">
+    <div>
+        <h2 class="page-title">Transaction History</h2>
+        <p class="breadcrumb">Transactions <span>/</span> History Logs</p>
+    </div>
+</div>
+
+<!-- Filters Card -->
+<div class="card" style="margin-bottom: 24px;">
+    <form action="{{ url_for('transaction_history') }}" method="GET">
+        <div class="form-grid" style="grid-template-columns: repeat(4, 1fr); gap: 16px; align-items: flex-end;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="search_acc" style="font-size: 12px; font-weight: 600; margin-bottom: 6px; display: block; color: var(--text-secondary);">Search Account</label>
+                <input type="text" name="search_acc" id="search_acc" class="form-control" placeholder="A/C Number..." value="{{ search_acc or '' }}">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="txn_type" style="font-size: 12px; font-weight: 600; margin-bottom: 6px; display: block; color: var(--text-secondary);">Type</label>
+                <select name="txn_type" id="txn_type" class="form-control">
+                    <option value="All" {% if txn_type == 'All' %}selected{% endif %}>All</option>
+                    <option value="Deposit" {% if txn_type == 'Deposit' %}selected{% endif %}>Deposit</option>
+                    <option value="Withdrawal" {% if txn_type == 'Withdrawal' %}selected{% endif %}>Withdrawal</option>
+                    <option value="Transfer" {% if txn_type == 'Transfer' %}selected{% endif %}>Transfer</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="txn_date" style="font-size: 12px; font-weight: 600; margin-bottom: 6px; display: block; color: var(--text-secondary);">Date</label>
+                <input type="date" name="txn_date" id="txn_date" class="form-control" value="{{ txn_date or '' }}">
+            </div>
+            
+            <div style="display: flex; gap: 8px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1; height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fa-solid fa-filter"></i> Filter
+                </button>
+                <a href="{{ url_for('transaction_history') }}" class="btn btn-secondary" style="height: 44px; display: inline-flex; align-items: center; justify-content: center;" title="Reset filters">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Transactions Table -->
+<div class="card">
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Account</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Balance</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                    <tr>
+                        <td style="font-weight: 600; color: var(--primary-color);">{{ txn.transaction_id }}</td>
+                        <td style="font-family: monospace; font-weight: 600;">{{ txn.account.account_number }}</td>
+                        <td>
+                            <span class="status-badge {% if txn.type == 'Deposit' %}status-approved{% else %}status-inactive{% endif %}" style="padding: 2px 8px; font-size: 11px;">
+                                {{ txn.type }}
+                            </span>
+                        </td>
+                        <td style="font-weight: 600; {% if txn.type == 'Deposit' %}color: var(--success-color);{% else %}color: var(--danger-color);{% endif %}">
+                            {% if txn.type == 'Deposit' %}+{% else %}-{% endif %}{{ txn.amount | format_currency }}
+                        </td>
+                        <td style="font-weight: 600; font-family: monospace;">
+                            {% if txn.running_balance is defined %}
+                                {{ txn.running_balance | format_currency }}
+                            {% else %}
+                                {{ txn.account.balance | format_currency }} <span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">(Current)</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ txn.created_at | format_date }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 32px;">
+                            No transaction records matched the filters.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination Footer -->
+    {% if pagination.pages > 1 %}
+        <div style="display: flex; justify-content: center; gap: 6px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('transaction_history', page=pagination.prev_num, search_acc=search_acc, txn_type=txn_type, txn_date=txn_date) }}" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+            {% endif %}
+            
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                        <span class="btn btn-primary btn-sm active" style="pointer-events: none;">{{ page_num }}</span>
+                    {% else %}
+                        <a href="{{ url_for('transaction_history', page=page_num, search_acc=search_acc, txn_type=txn_type, txn_date=txn_date) }}" class="btn btn-secondary btn-sm">
+                            {{ page_num }}
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <span style="align-self: center; padding: 0 4px; color: var(--text-muted);">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+                <a href="{{ url_for('transaction_history', page=pagination.next_num, search_acc=search_acc, txn_type=txn_type, txn_date=txn_date) }}" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

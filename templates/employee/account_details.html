@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Account Details - Employee Portal{% endblock %}
+
+{% block content %}
+<div class="page-title-box">
+    <div>
+        <h2 class="page-title">Account Details</h2>
+        <p class="breadcrumb">Transactions <span>/</span> Account Details</p>
+    </div>
+</div>
+
+<!-- Account Lookup -->
+<div class="card">
+    <div class="card-title">Search Customer Account</div>
+    
+    <form action="{{ url_for('employee_account_details') }}" method="GET">
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <div class="form-group" style="flex-grow: 1;">
+                <input type="text" name="search_acc" class="form-control" placeholder="Enter customer 12-digit account number" value="{{ search_acc or '' }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 45px;"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        </div>
+    </form>
+</div>
+
+{% if account %}
+    <div class="details-panel" style="margin-bottom: 24px;">
+        <!-- Left Side: Account Info -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <!-- Account Info -->
+            <div class="card" style="margin-bottom: 0;">
+                <div class="details-column-title">Account Information</div>
+                <ul class="details-list">
+                    <li class="details-item">
+                        <span class="details-label">Account Number:</span>
+                        <span class="details-value" style="font-family: monospace;">{{ account.account_number }}</span>
+                    </li>
+                    <li class="details-item">
+                        <span class="details-label">Account Holder:</span>
+                        <span class="details-value">{{ account.customer.name }}</span>
+                    </li>
+                    <li class="details-item">
+                        <span class="details-label">Account Type:</span>
+                        <span class="details-value">{{ account.account_type }}</span>
+                    </li>
+                    <li class="details-item">
+                        <span class="details-label">Branch Name:</span>
+                        <span class="details-value">{{ account.branch.name }}</span>
+                    </li>
+                    <li class="details-item">
+                        <span class="details-label">IFSC Code:</span>
+                        <span class="details-value" style="font-family: monospace;">{{ account.branch.ifsc_code }}</span>
+                    </li>
+                    <li class="details-item">
+                        <span class="details-label">Opening Date:</span>
+                        <span class="details-value">{{ account.created_at | format_date }}</span>
+                    </li>
+                    <li class="details-item">
+                        <span class="details-label">Status:</span>
+                        <span class="status-badge {% if account.status == 'Active' %}status-approved{% else %}status-inactive{% endif %}">
+                            {{ account.status }}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Balance Information -->
+            <div class="card" style="margin-bottom: 0;">
+                <div class="details-column-title">Balance Information</div>
+                <ul class="details-list">
+                    <li class="details-item">
+                        <span class="details-label">Current Balance:</span>
+                        <span class="details-value" style="font-size: 16px; color: var(--success-color); font-weight: 700;">
+                            {{ account.balance | format_currency }}
+                        </span>
+                    </li>
+                    <li class="details-item">
+                        <span class="details-label">Available Balance:</span>
+                        <span class="details-value" style="font-size: 16px; color: var(--success-color); font-weight: 700;">
+                            {{ account.balance | format_currency }}
+                        </span>
+                    </li>
+                    <li class="details-item">
+                        <span class="details-label">Lien Amount:</span>
+                        <span class="details-value">{{ 0.00 | format_currency }}</span>
+                    </li>
+                    <li class="details-item">
+                        <span class="details-label">Interest Rate:</span>
+                        <span class="details-value">
+                            {% if account.account_type == 'Savings' %}3.00%{% elif account.account_type == 'Fixed Deposit' %}6.50%{% else %}0.00%{% endif %}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Right Side: Recent Transactions -->
+        <div class="card" style="margin-bottom: 0;">
+            <div class="details-column-title">Recent Transactions</div>
+            
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for txn in account.transactions | sort(attribute='created_at', reverse=True) %}
+                            <tr>
+                                <td>{{ txn.created_at | format_date }}</td>
+                                <td>
+                                    <span class="status-badge {% if txn.type == 'Deposit' %}status-approved{% else %}status-inactive{% endif %}" style="padding: 2px 8px; font-size: 10px;">
+                                        {{ txn.type }}
+                                    </span>
+                                </td>
+                                <td style="font-size: 12px; color: var(--text-secondary);">{{ txn.description }}</td>
+                                <td style="font-weight: 600; {% if txn.type == 'Deposit' %}color: var(--success-color);{% else %}color: var(--danger-color);{% endif %}">
+                                    {% if txn.type == 'Deposit' %}+{% else %}-{% endif %}{{ txn.amount | format_currency }}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 20px;">No transactions recorded.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% elif search_acc %}
+    <div class="card" style="text-align: center; color: var(--text-secondary); padding: 40px;">
+        <i class="fa-solid fa-face-frown" style="font-size: 32px; color: var(--danger-color); margin-bottom: 12px;"></i>
+        <p>No account exists with number: <strong>{{ search_acc }}</strong></p>
+    </div>
+{% else %}
+    <div class="card" style="text-align: center; color: var(--text-secondary); padding: 40px;">
+        <i class="fa-solid fa-address-card" style="font-size: 40px; color: var(--text-muted); margin-bottom: 16px;"></i>
+        <p>Please search for a customer's account above to view full details.</p>
+    </div>
+{% endif %}
+{% endblock %}

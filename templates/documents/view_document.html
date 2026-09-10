@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        {% if doc_type == 'aadhaar_file' %}Aadhaar Card - {{ customer.name }}
+        {% elif doc_type == 'pan_file' %}PAN Card - {{ customer.name }}
+        {% elif doc_type == 'photo_file' %}Passport Photo - {{ customer.name }}
+        {% else %}Specimen Signature - {{ customer.name }}{% endif %} | Ajinkya Bank
+    </title>
+    <!-- Google Font & FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cinzel:wght@700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='2.0') }}">
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .doc-viewer-container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .doc-toolbar {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .doc-title-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .doc-icon-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(37, 99, 235, 0.2);
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .doc-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Document Canvas Card */
+        .doc-canvas {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 40px;
+            color: #0f172a;
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Watermark */
+        .doc-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 26px;
+            font-weight: 800;
+            color: rgba(220, 38, 38, 0.12);
+            border: 4px dashed rgba(220, 38, 38, 0.2);
+            padding: 12px 28px;
+            border-radius: 12px;
+            letter-spacing: 2px;
+            pointer-events: none;
+            user-select: none;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        /* --- AADHAAR CARD STYLING --- */
+        .aadhaar-card-frame {
+            width: 100%;
+            max-width: 650px;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .aadhaar-top-band {
+            background: linear-gradient(90deg, #ff9933 0%, #ffffff 50%, #138808 100%);
+            height: 6px;
+            width: 100%;
+        }
+
+        .aadhaar-header {
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .emblem-img {
+            height: 48px;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+        }
+
+        .aadhaar-titles {
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .aadhaar-titles h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .aadhaar-titles h5 {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #475569;
+            margin: 2px 0 0;
+        }
+
+        .uidai-logo {
+            height: 38px;
+        }
+
+        .aadhaar-body {
+            padding: 24px 24px 20px;
+            display: grid;
+            grid-template-columns: 140px 1fr 120px;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .aadhaar-photo-box {
+            width: 130px;
+            height: 155px;
+            border: 2px solid #94a3b8;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        .aadhaar-photo-initials {
+            font-size: 40px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .aadhaar-details-col {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .aadhaar-name-en {
+            font-size: 16px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .aadhaar-field {
+            font-size: 13px;
+            color: #334155;
+            display: flex;
+            gap: 6px;
+        }
+
+        .aadhaar-field strong {
+            color: #0f172a;
+        }
+
+        .aadhaar-qr-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .qr-placeholder {
+            width: 100px;
+            height: 100px;
+            background-color: #0f172a;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 40px;
+        }
+
+        .aadhaar-number-row {
+            background-color: #f8fafc;
+            border-top: 1px dashed #cbd5e1;
+            padding: 14px 20px;
+            text-align: center;
+        }
+
+        .aadhaar-number-display {
+            font-size: 22px;
+            font-weight: 800;
+            color: #dc2626;
+            letter-spacing: 4px;
+            font-family: monospace;
+        }
+
+        .aadhaar-footer-slogan {
+            background: #dc2626;
+            color: #ffffff;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 12px;
+            letter-spacing: 1px;
+        }
+
+        /* --- PAN CARD STYLING --- */
+        .pan-card-frame {
+            width: 100%;
+            max-width: 580px;
+            background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 50%, #f0fdf4 100%);
+            border: 2px solid #94a3b8;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        .pan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #1e3a8a;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
+
+        .pan-header-text {
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .pan-header-text h3 {
+            font-size: 14px;
+            font-weight: 800;
+            color: #1e3a8a;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .pan-header-text h4 {
+            font-size: 11px;
+            color: #334155;
+            margin: 2px 0 0;
+            text-transform: uppercase;
+        }
+
+        .pan-body {
+            display: grid;
+            grid-template-columns: 120px 1fr 100px;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .pan-photo-box {
+            width: 110px;
+            height: 135px;
+            border: 2px solid #334155;
+            background: #1e3a8a;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+        }
+
+        .pan-number-box {
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .pan-number-display {
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+
+        .pan-sign-box {
+            margin-top: 14px;
+            width: 180px;
+            height: 44px;
+            border-bottom: 1px dashed #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pan-signature-text {
+            font-family: 'Caveat', cursive, sans-serif;
+            font-size: 24px;
+            color: #1e3a8a;
+            font-weight: 700;
+        }
+
+        /* --- PHOTO & SIGN STYLING --- */
+        .photo-specimen-frame {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+        }
+
+        .passport-photo-lg {
+            width: 200px;
+            height: 250px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            border: 4px solid #ffffff;
+            outline: 2px solid #cbd5e1;
+        }
+
+        .signature-specimen-box {
+            width: 380px;
+            height: 120px;
+            background: #ffffff;
+            border: 2px dashed #94a3b8;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        @media print {
+            body { background: #ffffff !important; padding: 0 !important; }
+            .doc-toolbar { display: none !important; }
+            .doc-canvas { box-shadow: none !important; padding: 0 !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="doc-viewer-container">
+        <!-- Toolbar -->
+        <div class="doc-toolbar">
+            <div class="doc-title-info">
+                <div class="doc-icon-badge">
+                    {% if doc_type == 'aadhaar_file' %}<i class="fa-solid fa-id-card"></i>
+                    {% elif doc_type == 'pan_file' %}<i class="fa-solid fa-credit-card"></i>
+                    {% elif doc_type == 'photo_file' %}<i class="fa-solid fa-camera"></i>
+                    {% else %}<i class="fa-solid fa-signature"></i>{% endif %}
+                </div>
+                <div>
+                    <h3 style="font-size: 15px; font-weight: 700; margin: 0;">
+                        {% if doc_type == 'aadhaar_file' %}Government of India - Aadhaar Card
+                        {% elif doc_type == 'pan_file' %}Income Tax Department - PAN Card
+                        {% elif doc_type == 'photo_file' %}Customer Identification Photograph
+                        {% else %}Customer Specimen Signature Record{% endif %}
+                    </h3>
+                    <span style="font-size: 12px; color: #94a3b8;">
+                        Account No: <strong style="color: #60a5fa; font-family: monospace;">{{ account.account_number }}</strong> &bull; Customer: {{ customer.name }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="doc-actions">
+                <button onclick="window.print();" class="btn btn-primary" style="padding: 7px 14px; font-size: 12.5px;">
+                    <i class="fa-solid fa-print"></i> Print Document
+                </button>
+                <button onclick="window.close();" class="btn btn-secondary" style="padding: 7px 14px; font-size: 12.5px;">
+                    <i class="fa-solid fa-xmark"></i> Close
+                </button>
+            </div>
+        </div>
+
+        <!-- Document Canvas Area -->
+        <div class="doc-canvas">
+            <div class="doc-watermark">AJINKYA BANK &bull; KYC DUPLICATE VERIFIED</div>
+
+            {% if doc_type == 'aadhaar_file' %}
+                <!-- Aadhaar Card View -->
+                <div class="aadhaar-card-frame">
+                    <div class="aadhaar-top-band"></div>
+                    <div class="aadhaar-header">
+                        <div style="font-size: 28px; color: #1e3a8a;"><i class="fa-solid fa-landmark"></i></div>
+                        <div class="aadhaar-titles">
+                            <h4>भारत सरकार</h4>
+                            <h5>Government of India</h5>
+                            <span style="font-size: 9.5px; color: #64748b; font-weight: 600;">भारतीय विशिष्ट पहचान प्राधिकरण / UIDAI</span>
+                        </div>
+                        <div style="font-size: 26px; color: #dc2626;"><i class="fa-solid fa-fingerprint"></i></div>
+                    </div>
+
+                    <div class="aadhaar-body">
+                        <!-- Photograph -->
+                        <div class="aadhaar-photo-box">
+                            <span class="aadhaar-photo-initials">{{ customer.name[:2] | upper }}</span>
+                            <span style="font-size: 9px; margin-top: 4px; font-weight: 700; letter-spacing: 0.5px;">PHOTO ID</span>
+                        </div>
+
+                        <!-- Details -->
+                        <div class="aadhaar-details-col">
+                            <div class="aadhaar-name-en">{{ customer.name }}</div>
+                            <div class="aadhaar-field">
+                                <span>जन्म तारीख / DOB:</span>
+                                <strong>{{ customer.dob.strftime('%d/%m/%Y') }}</strong>
+                            </div>
+                            <div class="aadhaar-field">
+                                <span>लिंग / Gender:</span>
+                                <strong>{{ customer.gender }}</strong>
+                            </div>
+                            <div class="aadhaar-field" style="margin-top: 4px; font-size: 11.5px; color: #64748b;">
+                                <span>पत्ता / Address:</span>
+                                <span>{{ customer.address }}</span>
+                            </div>
+                        </div>
+
+                        <!-- QR Code simulation -->
+                        <div class="aadhaar-qr-box">
+                            <div class="qr-placeholder">
+                                <i class="fa-solid fa-qrcode"></i>
+                            </div>
+                            <span style="font-size: 9px; color: #64748b; font-weight: 600;">SECURE QR</span>
+                        </div>
+                    </div>
+
+                    <div class="aadhaar-number-row">
+                        <span style="font-size: 11px; color: #64748b; display: block; margin-bottom: 2px;">आधार क्रमांक / Aadhaar Number</span>
+                        <div class="aadhaar-number-display">
+                            {{ customer.aadhaar[:4] }} &nbsp;{{ customer.aadhaar[5:9] }} &nbsp;{{ customer.aadhaar[10:] }}
+                        </div>
+                    </div>
+
+                    <div class="aadhaar-footer-slogan">
+                        मेरा आधार, मेरी पहचान &bull; आधार - आम आदमी का अधिकार
+                    </div>
+                </div>
+
+            {% elif doc_type == 'pan_file' %}
+                <!-- PAN Card View -->
+                <div class="pan-card-frame">
+                    <div class="pan-header">
+                        <div style="font-size: 24px; color: #1e3a8a;"><i class="fa-solid fa-building-columns"></i></div>
+                        <div class="pan-header-text">
+                            <h3>आयकर विभाग &bull; INCOME TAX DEPARTMENT</h3>
+                            <h4>भारत सरकार &bull; GOVT. OF INDIA</h4>
+                        </div>
+                        <div style="font-size: 24px; color: #d97706;"><i class="fa-solid fa-certificate"></i></div>
+                    </div>
+
+                    <div class="pan-body">
+                        <!-- Photograph -->
+                        <div class="pan-photo-box">
+                            <span style="font-size: 36px; font-weight: 800;">{{ customer.name[:2] | upper }}</span>
+                            <span style="font-size: 8px; margin-top: 4px; font-weight: 700;">KYC PHOTO</span>
+                        </div>
+
+                        <!-- Details -->
+                        <div>
+                            <span style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase;">Permanent Account Number</span>
+                            <div class="pan-number-box">
+                                <span class="pan-number-display">{{ customer.pan }}</span>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <span style="font-size: 9px; color: #64748b; font-weight: 700; display: block; text-transform: uppercase;">Name</span>
+                                <span style="font-size: 14px; font-weight: 800; color: #0f172a; text-transform: uppercase;">{{ customer.name }}</span>
+                            </div>
+
+                            <div style="margin-top: 6px; display: flex; gap: 20px;">
+                                <div>
+                                    <span style="font-size: 9px; color: #64748b; font-weight: 700; display: block; text-transform: uppercase;">Date of Birth</span>
+                                    <span style="font-size: 12.5px; font-weight: 700; color: #0f172a;">{{ customer.dob.strftime('%d/%m/%Y') }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Signature Area -->
+                            <div class="pan-sign-box">
+                                <span class="pan-signature-text">{{ customer.name }}</span>
+                            </div>
+                        </div>
+
+                        <!-- QR Code -->
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
+                            <div class="qr-placeholder" style="width: 85px; height: 85px; font-size: 32px;">
+                                <i class="fa-solid fa-qrcode"></i>
+                            </div>
+                            <span style="font-size: 8.5px; font-weight: 700; color: #475569;">DIGITAL SCAN</span>
+                        </div>
+                    </div>
+                </div>
+
+            {% elif doc_type == 'photo_file' %}
+                <!-- Photograph View -->
+                <div class="photo-specimen-frame">
+                    <div class="passport-photo-lg">
+                        <span style="font-size: 56px; font-weight: 800;">{{ customer.name[:2] | upper }}</span>
+                        <span style="font-size: 14px; font-weight: 700; letter-spacing: 1px; margin-top: 8px;">{{ customer.name | upper }}</span>
+                        <span style="font-size: 11px; opacity: 0.8; margin-top: 2px;">Customer ID: {{ customer.customer_id }}</span>
+                    </div>
+                    <div style="text-align: center;">
+                        <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">{{ customer.name }}</h4>
+                        <span class="badge badge-success" style="font-size: 11.5px;"><i class="fa-solid fa-shield-check"></i> Biometric KYC Verified</span>
+                    </div>
+                </div>
+
+            {% else %}
+                <!-- Signature View -->
+                <div class="photo-specimen-frame">
+                    <div class="signature-specimen-box">
+                        <span style="font-family: 'Caveat', cursive, sans-serif; font-size: 48px; color: #1e3a8a; font-weight: 700; transform: rotate(-3deg);">
+                            {{ customer.name }}
+                        </span>
+                    </div>
+                    <div style="text-align: center;">
+                        <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">Specimen Signature on Bank Record</h4>
+                        <span style="font-size: 12px; color: #64748b;">A/C: {{ account.account_number }} &bull; Branch: {{ account.branch.name }}</span>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Balance Inquiry - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="page-title-box">
+    <div>
+        <h2 class="page-title">Balance Inquiry</h2>
+        <p class="breadcrumb">Transactions <span>/</span> Balance Inquiry</p>
+    </div>
+</div>
+
+<div class="card" style="max-width: 700px; margin: 0 auto 24px;">
+    <div class="card-title">Check Account Balance</div>
+    
+    <form action="{{ url_for('balance_inquiry') }}" method="GET" style="margin-bottom: 20px;">
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <div class="form-group" style="flex-grow: 1; margin-bottom: 0;">
+                <label for="search_acc" class="no-print" style="font-size: 13px; font-weight: 600; margin-bottom: 8px; display: block; color: var(--text-secondary);">Account or Mobile Number</label>
+                <input type="text" name="search_acc" id="search_acc" class="form-control" placeholder="Search by account or mobile number..." value="{{ search_acc or '' }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 46px; align-self: flex-end;"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        </div>
+    </form>
+</div>
+
+{% if account %}
+    <div class="card" style="max-width: 700px; margin: 0 auto; padding: 32px; border-left: 5px solid var(--primary-color);">
+        <div style="margin-bottom: 24px;">
+            <span style="display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 500; text-transform: uppercase;">Account Holder</span>
+            <span style="font-size: 20px; font-weight: 700; color: var(--text-primary);">{{ account.customer.name }}</span>
+        </div>
+        
+        <div style="margin-bottom: 28px; background: rgba(37, 99, 235, 0.05); padding: 20px; border-radius: 8px; border: 1px dashed rgba(37, 99, 235, 0.15);">
+            <span style="display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; text-transform: uppercase;">Available Balance</span>
+            <span style="font-size: 32px; font-weight: 800; color: var(--success-color); font-family: 'Inter', sans-serif;">
+                {{ account.balance | format_currency }}
+            </span>
+        </div>
+        
+        <div style="display: flex; gap: 40px; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+            <div>
+                <span style="display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase;">Account Type</span>
+                <span style="font-size: 15px; font-weight: 600; color: var(--text-primary);">{{ account.account_type }}</span>
+            </div>
+            <div>
+                <span style="display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase;">Status</span>
+                <span class="status-badge {% if account.status == 'Active' %}status-approved{% else %}status-inactive{% endif %}" style="padding: 4px 12px; font-size: 12px;">
+                    {{ account.status }}
+                </span>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 12px;">
+            <a href="{{ url_for('transaction_history', search_acc=account.account_number) }}" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-list-ol"></i> View Statement
+            </a>
+            <a href="{{ url_for('admin_view_passbook', account_number=account.account_number) }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-book"></i> View Passbook
+            </a>
+        </div>
+    </div>
+{% elif search_acc %}
+    <div class="card" style="max-width: 700px; margin: 0 auto; text-align: center; padding: 40px; color: var(--text-secondary);">
+        <i class="fa-solid fa-face-frown" style="font-size: 36px; color: var(--danger-color); margin-bottom: 16px;"></i>
+        <p>No active account exists with number: <strong>{{ search_acc }}</strong></p>
+    </div>
+{% endif %}
+{% endblock %}

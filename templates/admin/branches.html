@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Branch Management - Ajinkya Bank{% endblock %}
+
+{% block content %}
+<div class="page-title-box">
+    <div>
+        <h2 class="page-title">Branch Management</h2>
+        <p class="breadcrumb">Dashboard <span>/</span> Branches</p>
+    </div>
+</div>
+
+<div class="details-panel">
+    <!-- Add Branch Form -->
+    <div class="card" style="margin-bottom: 0;">
+        <div class="card-title">Create New Branch</div>
+        
+        <form action="{{ url_for('admin_branches') }}" method="POST">
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label for="name">Branch Name</label>
+                <input type="text" name="name" id="name" class="form-control" placeholder="e.g. City Center Branch" required>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label for="branch_code">Branch Code</label>
+                <input type="text" name="branch_code" id="branch_code" class="form-control" placeholder="e.g. BR03" required>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label for="ifsc_code">IFSC Code</label>
+                <input type="text" name="ifsc_code" id="ifsc_code" class="form-control" placeholder="e.g. SBIN0009988" required style="text-transform: uppercase;">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="address">Address</label>
+                <input type="text" name="address" id="address" class="form-control" placeholder="Street name, City, Pin Code" required>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn btn-primary">Create Branch</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Branches List -->
+    <div class="card" style="margin-bottom: 0;">
+        <div class="card-title">Existing Branches</div>
+        
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Branch Name</th>
+                        <th>IFSC Code</th>
+                        <th>Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for branch in branches %}
+                        <tr>
+                            <td style="font-weight: 600; color: var(--primary-color);">{{ branch.branch_code }}</td>
+                            <td style="font-weight: 500;">{{ branch.name }}</td>
+                            <td style="font-weight: 500; font-family: monospace;">{{ branch.ifsc_code }}</td>
+                            <td style="font-size: 12px; color: var(--text-secondary);">{{ branch.address }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-secondary);">No branches exist in the database.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

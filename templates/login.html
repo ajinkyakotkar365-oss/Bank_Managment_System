@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Ajinkya Bank NetBanking Portal</title>
+    <!-- Google Font & FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body.login-body-split {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #0b1329;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .login-split-container {
+            display: flex;
+            width: 100vw;
+            min-height: 100vh;
+        }
+
+        /* Left Hero Visual (Commercial Bank Glass Tower) */
+        .login-hero-side {
+            flex: 1.1;
+            background: linear-gradient(135deg, rgba(11, 19, 41, 0.88) 0%, rgba(30, 58, 138, 0.85) 100%),
+                        url('https://images.unsplash.com/photo-1541888946425-d0fbb186f5f7?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+            padding: 60px 70px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #ffffff;
+            position: relative;
+        }
+
+        .hero-logo-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-logo-box i {
+            color: #60a5fa;
+            font-size: 32px;
+        }
+
+        .hero-content {
+            max-width: 540px;
+        }
+
+        .hero-title {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 16px;
+            color: #ffffff;
+        }
+
+        .hero-subtitle {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            margin-bottom: 36px;
+        }
+
+        .hero-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .hero-feat-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13.5px;
+            color: #e2e8f0;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 10px 14px;
+            border-radius: 8px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hero-feat-item i {
+            color: #38bdf8;
+            font-size: 16px;
+        }
+
+        .hero-footer {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        /* Right Form Side */
+        .login-form-side {
+            flex: 0.9;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px 80px;
+        }
+
+        @media (max-width: 1024px) {
+            .login-hero-side {
+                display: none;
+            }
+            .login-form-side {
+                flex: 1;
+                padding: 40px 24px;
+            }
+        }
+
+        .form-header {
+            margin-bottom: 30px;
+        }
+
+        .form-header h2 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .form-header p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        /* Role Selector Tabs */
+        .role-tabs {
+            display: flex;
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 4px;
+            gap: 4px;
+            margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .role-tab-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .role-tab-btn.active {
+            background: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Demo Quick Pill Buttons */
+        .demo-pills {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 24px;
+        }
+
+        .demo-pills-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pill-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pill-btn {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #1e293b;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .pill-btn:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .auth-input-group {
+            margin-bottom: 20px;
+        }
+
+        .auth-input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #334155;
+        }
+
+        .auth-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .auth-input-wrapper i.prefix-icon {
+            position: absolute;
+            left: 14px;
+            color: #94a3b8;
+            font-size: 15px;
+        }
+
+        .auth-input-wrapper input {
+            width: 100%;
+            padding: 12px 16px 12px 42px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14.5px;
+            color: #0f172a;
+            background: #ffffff;
+            transition: border-color 0.15s ease;
+        }
+
+        .auth-input-wrapper input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .auth-input-wrapper i.toggle-password {
+            position: absolute;
+            right: 14px;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .auth-btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .auth-btn-submit:hover {
+            background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="login-body-split">
+
+<div class="login-split-container">
+    
+    <!-- LEFT SIDE: Modern Bank Glass Tower & Trust Highlights -->
+    <div class="login-hero-side">
+        <div class="hero-logo-box">
+            <i class="fa-solid fa-building-columns"></i>
+            <span>Ajinkya <span style="color: #60a5fa;">Bank</span></span>
+        </div>
+
+        <div class="hero-content">
+            <h1 class="hero-title">Welcome to Your Bank</h1>
+            <p class="hero-subtitle">
+                Experience next-generation commercial internet banking. Effortless cash operations, fast teller desks, instant virtual debit cards, and seamless digital transfers.
+            </p>
+
+            <div class="hero-features">
+                <div class="hero-feat-item">
+                    <i class="fa-solid fa-bolt-lightning"></i>
+                    <span>Instant UPI & NEFT Transfers</span>
+                </div>
+                <div class="hero-feat-item">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>256-Bit SSL Bank Encryption</span>
+                </div>
+                <div class="hero-feat-item">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>RuPay Platinum Virtual Card</span>
+                </div>
+                <div class="hero-feat-item">
+                    <i class="fa-solid fa-landmark"></i>
+                    <span>RBI Regulated Banking</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-footer">
+            &copy; 2026 Ajinkya Bank Ltd. All rights reserved. &bull; Better Banking. Faster Lives.
+        </div>
+    </div>
+
+    <!-- RIGHT SIDE: Modern Clean Role-Based Login Form -->
+    <div class="login-form-side">
+        <div style="max-width: 440px; width: 100%; margin: 0 auto;">
+            
+            <div class="form-header">
+                <h2>Sign in to NetBanking</h2>
+                <p>Select your portal role and enter your banking credentials</p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" style="margin-bottom: 20px; font-size: 13.5px; padding: 12px 16px; border-radius: 8px;">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Role Tabs Selector -->
+            <div class="role-tabs">
+                <button type="button" class="role-tab-btn active" id="tab-customer" onclick="setRole('customer')">
+                    <i class="fa-solid fa-user"></i> Customer
+                </button>
+                <button type="button" class="role-tab-btn" id="tab-employee" onclick="setRole('employee')">
+                    <i class="fa-solid fa-desktop"></i> Cashier / Teller
+                </button>
+                <button type="button" class="role-tab-btn" id="tab-admin" onclick="setRole('admin')">
+                    <i class="fa-solid fa-user-shield"></i> Admin
+                </button>
+            </div>
+
+            <!-- Demo 1-Click Fast Fill Pills -->
+            <div class="demo-pills">
+                <div class="demo-pills-title"><i class="fa-solid fa-key"></i> 1-Click Demo Fill:</div>
+                <div class="pill-group">
+                    <button type="button" class="pill-btn" onclick="fillCredentials('customer', 'cust123')">
+                        <i class="fa-solid fa-user text-primary"></i> Customer
+                    </button>
+                    <button type="button" class="pill-btn" onclick="fillCredentials('cashier', 'cashier123')">
+                        <i class="fa-solid fa-desktop" style="color: #059669;"></i> Cashier
+                    </button>
+                    <button type="button" class="pill-btn" onclick="fillCredentials('admin', 'admin123')">
+                        <i class="fa-solid fa-shield-halved" style="color: #d97706;"></i> Admin
+                    </button>
+                </div>
+            </div>
+
+            <!-- Login Form -->
+            <form action="{{ url_for('login') }}" method="POST">
+                <div class="auth-input-group">
+                    <label for="username" id="username-label">Username / Customer ID</label>
+                    <div class="auth-input-wrapper">
+                        <i class="fa-solid fa-user prefix-icon"></i>
+                        <input type="text" name="username" id="username" placeholder="Enter username or customer ID" value="customer" required autofocus autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label for="password" style="margin-bottom: 0;">Password</label>
+                        <a href="javascript:void(0)" onclick="alert('For demo accounts: customer / cust123, cashier / cashier123, admin / admin123');" style="font-size: 12px; color: #2563eb; text-decoration: none; font-weight: 600;">Forgot Password?</a>
+                    </div>
+                    <div class="auth-input-wrapper">
+                        <i class="fa-solid fa-lock prefix-icon"></i>
+                        <input type="password" name="password" id="password" placeholder="Enter your secret password" value="cust123" required autocomplete="current-password">
+                        <i class="fa-solid fa-eye toggle-password" id="toggle-pwd-btn" onclick="togglePasswordVisibility()"></i>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b; cursor: pointer; margin-bottom: 0;">
+                        <input type="checkbox" name="remember" checked style="width: 16px; height: 16px;">
+                        Remember me on this browser
+                    </label>
+                </div>
+
+                <button type="submit" class="auth-btn-submit" id="submit-btn">
+                    <span>Sign In to NetBanking</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 28px; font-size: 13px; color: #64748b;">
+                New to Ajinkya Bank? <a href="{{ url_for('register') }}" style="color: #2563eb; font-weight: 700; text-decoration: none;">Open a Digital Account</a>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+function setRole(role) {
+    document.querySelectorAll('.role-tab-btn').forEach(btn => btn.classList.remove('active'));
+    
+    if (role === 'customer') {
+        document.getElementById('tab-customer').classList.add('active');
+        fillCredentials('customer', 'cust123');
+        document.getElementById('username-label').textContent = 'Username / Customer ID';
+        document.getElementById('username').placeholder = 'Enter customer username (e.g. customer)';
+    } else if (role === 'employee') {
+        document.getElementById('tab-employee').classList.add('active');
+        fillCredentials('cashier', 'cashier123');
+        document.getElementById('username-label').textContent = 'Teller / Cashier ID';
+        document.getElementById('username').placeholder = 'Enter teller username (e.g. cashier)';
+    } else if (role === 'admin') {
+        document.getElementById('tab-admin').classList.add('active');
+        fillCredentials('admin', 'admin123');
+        document.getElementById('username-label').textContent = 'Administrator Username';
+        document.getElementById('username').placeholder = 'Enter admin username (e.g. admin)';
+    }
+}
+
+function fillCredentials(u, p) {
+    document.getElementById('username').value = u;
+    document.getElementById('password').value = p;
+}
+
+function togglePasswordVisibility() {
+    const pwd = document.getElementById('password');
+    const icon = document.getElementById('toggle-pwd-btn');
+    if (pwd.type === 'password') {
+        pwd.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        pwd.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+</script>
+
+</body>
+</html>

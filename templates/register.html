@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Customer - Ajinkya Bank</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body">
+    <div class="card" style="width: 800px; max-width: 95%; margin: 40px auto; padding: 40px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <i class="fa-solid fa-building-columns" style="font-size: 40px; color: var(--primary-color); margin-bottom: 12px;"></i>
+            <h2 style="font-size: 26px; font-weight: 700; color: var(--text-primary);">Create Customer Account</h2>
+            <p style="font-size: 14px; color: var(--text-secondary); margin-top: 4px;">Join Ajinkya Bank for premium digital banking services</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div style="margin-bottom: 20px;">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('register') }}" method="POST">
+            <h4 style="font-size: 15px; font-weight: 600; color: var(--primary-color); margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">Account Credentials</h4>
+            
+            <div class="form-grid" style="margin-bottom: 24px;">
+                <div class="form-group">
+                    <label for="username">Choose Username</label>
+                    <input type="text" name="username" id="username" class="form-control" placeholder="e.g. rahul_sharma" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Choose Password</label>
+                    <input type="password" name="password" id="password" class="form-control" placeholder="Min 6 characters" required>
+                </div>
+            </div>
+
+            <h4 style="font-size: 15px; font-weight: 600; color: var(--primary-color); margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">Personal Details</h4>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" name="name" id="name" class="form-control" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="dob">Date of Birth</label>
+                    <input type="date" name="dob" id="dob" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="gender">Gender</label>
+                    <select name="gender" id="gender" class="form-control" required>
+                        <option value="" disabled selected>Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="mobile">Mobile Number</label>
+                    <input type="tel" name="mobile" id="mobile" class="form-control" placeholder="10-digit number" pattern="[0-9]{10}" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" name="email" id="email" class="form-control" placeholder="name@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="aadhaar">Aadhaar Number</label>
+                    <input type="text" name="aadhaar" id="aadhaar" class="form-control" placeholder="12-digit number" pattern="[0-9]{4}-[0-9]{4}-[0-9]{4}|[0-9]{12}" required>
+                </div>
+                <div class="form-group">
+                    <label for="pan">PAN Number</label>
+                    <input type="text" name="pan" id="pan" class="form-control" placeholder="10-digit alphanumeric" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" required style="text-transform: uppercase;">
+                </div>
+                <div class="form-group form-group-full">
+                    <label for="address">Residential Address</label>
+                    <input type="text" name="address" id="address" class="form-control" placeholder="House, Street, City, State" required>
+                </div>
+            </div>
+
+            <div class="form-footer" style="padding-top: 16px;">
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Customers List - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="page-title-box">
+    <div>
+        <h2 class="page-title">Customers</h2>
+        <p class="breadcrumb">Dashboard <span>/</span> Customer List</p>
+    </div>
+    <a href="{{ url_for('admin_add_customer') }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-user-plus"></i> Add Customer
+    </a>
+</div>
+
+<div class="card">
+    <!-- Search Row (Mockup 9) -->
+    <form action="{{ url_for('admin_customers') }}" method="GET" style="margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
+        <div style="flex-grow: 1; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 14px; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Search</span>
+            <input type="text" name="search" class="form-control" placeholder="Enter customer name, ID or mobile..." value="{{ search_query or '' }}" style="width: 100%;">
+        </div>
+        <button type="submit" class="btn btn-primary" style="height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 24px;">
+            Search
+        </button>
+        {% if search_query %}
+            <a href="{{ url_for('admin_customers') }}" class="btn btn-secondary" style="height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px;">
+                Clear
+            </a>
+        {% endif %}
+    </form>
+    
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Mobile</th>
+                    <th>Accounts</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cust in customers %}
+                    <tr>
+                        <td style="font-weight: 600; color: var(--primary-color);">{{ cust.customer_id }}</td>
+                        <td style="font-weight: 600;">{{ cust.name }}</td>
+                        <td>{{ cust.mobile }}</td>
+                        <td>
+                            {% if cust.accounts %}
+                                {% for acc in cust.accounts %}
+                                    <span style="font-family: monospace; display: block; font-weight: 500; font-size: 13px;">{{ acc.account_number }} ({{ acc.account_type }})</span>
+                                {% endfor %}
+                            {% else %}
+                                <span style="color: var(--text-muted); font-size: 12px;">No Accounts</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="status-badge {% if cust.status == 'Active' %}status-approved{% else %}status-inactive{% endif %}">
+                                {{ cust.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                {% if cust.accounts %}
+                                    <a href="{{ url_for('admin_view_passbook', account_number=cust.accounts[0].account_number) }}" class="btn btn-secondary btn-sm btn-icon-only" title="View Passbook & KYC Documents">
+                                        <i class="fa-solid fa-id-card"></i>
+                                    </a>
+                                    <a href="{{ url_for('admin_view_debit_card', account_number=cust.accounts[0].account_number) }}" class="btn btn-secondary btn-sm btn-icon-only" title="View Virtual Debit Card">
+                                        <i class="fa-solid fa-credit-card" style="color: #2563eb;"></i>
+                                    </a>
+                                    <a href="{{ url_for('balance_inquiry', search_acc=cust.accounts[0].account_number) }}" class="btn btn-secondary btn-sm btn-icon-only" title="Balance Check">
+                                        <i class="fa-solid fa-wallet"></i>
+                                    </a>
+                                {% endif %}
+                                
+                                <form action="{{ url_for('admin_toggle_customer', id=cust.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to toggle status for this customer?');">
+                                    <button type="submit" class="btn btn-sm btn-icon-only {% if cust.status == 'Active' %}btn-danger{% else %}btn-success{% endif %}" title="Toggle status">
+                                        {% if cust.status == 'Active' %}
+                                            <i class="fa-solid fa-lock"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-lock-open"></i>
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+                            No customers found matching your criteria.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if pagination and pagination.pages > 1 %}
+        <div class="pagination-wrapper">
+            <span class="pagination-info">
+                Showing page <strong>{{ pagination.page }}</strong> of <strong>{{ pagination.pages }}</strong> (Total: <strong>{{ total_count }}</strong> customers)
+            </span>
+            <div class="pagination-controls">
+                {% if pagination.has_prev %}
+                    <a href="{{ url_for('admin_customers', page=pagination.prev_num, search=search_query) }}" class="pagination-btn">
+                        <i class="fa-solid fa-chevron-left"></i> Prev
+                    </a>
+                {% else %}
+                    <span class="pagination-btn disabled"><i class="fa-solid fa-chevron-left"></i> Prev</span>
+                {% endif %}
+
+                {% for p in pagination.iter_pages(left_edge=2, left_current=2, right_current=2, right_edge=2) %}
+                    {% if p %}
+                        {% if p == pagination.page %}
+                            <span class="pagination-btn active">{{ p }}</span>
+                        {% else %}
+                            <a href="{{ url_for('admin_customers', page=p, search=search_query) }}" class="pagination-btn">{{ p }}</a>
+                        {% endif %}
+                    {% else %}
+                        <span class="pagination-btn disabled">&hellip;</span>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                    <a href="{{ url_for('admin_customers', page=pagination.next_num, search=search_query) }}" class="pagination-btn">
+                        Next <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                {% else %}
+                    <span class="pagination-btn disabled">Next <i class="fa-solid fa-chevron-right"></i></span>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

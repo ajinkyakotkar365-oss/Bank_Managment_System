@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Open New Bank Account - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="page-title-box">
+    <div>
+        <h2 class="page-title">Open New Bank Account</h2>
+        <p class="breadcrumb">Accounts <span>/</span> Open Account Form</p>
+    </div>
+</div>
+
+<div class="card" style="max-width: 900px; margin: 0 auto; padding: 32px;">
+    <div class="card-title" style="margin-bottom: 28px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
+        <i class="fa-solid fa-folder-plus text-primary"></i> Create Customer Account Profile
+    </div>
+    
+    <form action="{{ url_for('admin_open_account') }}" method="POST" enctype="multipart/form-data">
+        <!-- Personal Information Section -->
+        <h4 style="font-size: 14px; font-weight: 700; color: var(--primary-color); margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Personal Information</h4>
+        
+        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 24px;">
+            <div class="form-group">
+                <label for="first_name">First Name</label>
+                <input type="text" name="first_name" id="first_name" class="form-control" placeholder="Enter first name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="last_name">Last Name</label>
+                <input type="text" name="last_name" id="last_name" class="form-control" placeholder="Enter last name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="mobile">Mobile Number</label>
+                <input type="tel" name="mobile" id="mobile" class="form-control" placeholder="10-digit mobile number" pattern="[0-9]{10}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" name="email" id="email" class="form-control" placeholder="name@example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="dob">Date of Birth</label>
+                <input type="date" name="dob" id="dob" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="gender">Gender</label>
+                <select name="gender" id="gender" class="form-control" required>
+                    <option value="" disabled selected>Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="grid-column: span 2;">
+                <label for="address">Address</label>
+                <input type="text" name="address" id="address" class="form-control" placeholder="Enter flat, building, street, city, pin code" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="aadhaar">Aadhaar Number</label>
+                <input type="text" name="aadhaar" id="aadhaar" class="form-control" placeholder="12-digit UID" pattern="[0-9]{4}-[0-9]{4}-[0-9]{4}|[0-9]{12}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="pan">PAN Number</label>
+                <input type="text" name="pan" id="pan" class="form-control" placeholder="10-digit alphanumeric" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" required style="text-transform: uppercase;">
+            </div>
+        </div>
+        
+        <!-- Account Information Section -->
+        <h4 style="font-size: 14px; font-weight: 700; color: var(--primary-color); margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Account Information</h4>
+        
+        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 24px;">
+            <div class="form-group">
+                <label for="account_type">Account Type</label>
+                <select name="account_type" id="account_type" class="form-control" required>
+                    <option value="Savings" selected>Savings</option>
+                    <option value="Current">Current</option>
+                    <option value="Salary">Salary</option>
+                    <option value="Fixed Deposit">Fixed Deposit</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="opening_balance">Initial Deposit (₹)</label>
+                <input type="number" step="0.01" min="0" name="opening_balance" id="opening_balance" class="form-control" placeholder="0.00" value="0.00" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="branch_id">Branch</label>
+                <select name="branch_id" id="branch_id" class="form-control" required>
+                    <option value="" disabled selected>Select Branch</option>
+                    {% for branch in branches %}
+                        <option value="{{ branch.id }}">{{ branch.name }} (IFSC: {{ branch.ifsc_code }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="kyc_status">KYC Status</label>
+                <select name="kyc_status" id="kyc_status" class="form-control" required>
+                    <option value="Verified" selected>Verified</option>
+                    <option value="Pending">Pending</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Document Upload Section -->
+        <h4 style="font-size: 14px; font-weight: 700; color: var(--primary-color); margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Upload Identification Documents</h4>
+        
+        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 32px;">
+            <div class="form-group">
+                <label for="aadhaar_file">Aadhaar Card (PDF/Image)</label>
+                <input type="file" name="aadhaar_file" id="aadhaar_file" class="form-control" accept=".pdf, image/*">
+            </div>
+            
+            <div class="form-group">
+                <label for="pan_file">PAN Card (PDF/Image)</label>
+                <input type="file" name="pan_file" id="pan_file" class="form-control" accept=".pdf, image/*">
+            </div>
+            
+            <div class="form-group">
+                <label for="photo_file">Passport Size Photo</label>
+                <input type="file" name="photo_file" id="photo_file" class="form-control" accept="image/*">
+            </div>
+            
+            <div class="form-group">
+                <label for="sign_file">Customer Signature Scan</label>
+                <input type="file" name="sign_file" id="sign_file" class="form-control" accept="image/*">
+            </div>
+        </div>
+        
+        <div class="form-footer" style="padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px;">
+            <a href="{{ url_for('admin_customers') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary" style="padding: 12px 24px; font-weight: 600;">Create Account</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

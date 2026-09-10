@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+
+{% block title %}Executive Admin Dashboard - Ajinkya Bank{% endblock %}
+
+{% block content %}
+<!-- Top Header & Breadcrumb (Matches Panel 9) -->
+<div class="page-title-box">
+    <div>
+        <h2 class="page-title"><i class="fa-solid fa-gauge-high" style="color: var(--primary-color); margin-right: 8px;"></i> Executive Management Console</h2>
+        <div class="breadcrumb" style="margin-top: 6px;">
+            <span>Core Banking Engine</span>
+            <i class="fa-solid fa-chevron-right text-muted" style="font-size: 10px;"></i>
+            <span>Real-time Operations</span>
+            <i class="fa-solid fa-chevron-right text-muted" style="font-size: 10px;"></i>
+            <span style="color: var(--primary-color); font-weight: 600;">Enterprise Overview</span>
+        </div>
+    </div>
+    
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <a href="{{ url_for('employee_teller_desk') }}" class="btn btn-primary" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
+            <i class="fa-solid fa-desktop"></i> Fast Teller Desk
+        </a>
+        <a href="{{ url_for('admin_cards_approval') }}" class="btn btn-outline" style="position: relative;">
+            <i class="fa-solid fa-credit-card"></i> Cards Queue
+            {% if pending_cards_count > 0 %}
+                <span style="position: absolute; top: -6px; right: -6px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 10px;">{{ pending_cards_count }}</span>
+            {% endif %}
+        </a>
+        <a href="{{ url_for('admin_loans') }}" class="btn btn-outline" style="position: relative;">
+            <i class="fa-solid fa-stamp"></i> Loans Queue
+            {% if pending_loans_count > 0 %}
+                <span style="position: absolute; top: -6px; right: -6px; background: #f59e0b; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 10px;">{{ pending_loans_count }}</span>
+            {% endif %}
+        </a>
+    </div>
+</div>
+
+<!-- 4 KPI Metric Cards Grid (Matches Panel 9) -->
+<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
+    
+    <!-- 1. Total Customers -->
+    <div class="stat-card" style="border-radius: 14px; padding: 20px; border: 1px solid var(--border-color); background: #ffffff; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+        <div class="stat-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Customers</span>
+            <div style="width: 38px; height: 38px; border-radius: 10px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                <i class="fa-solid fa-users"></i>
+            </div>
+        </div>
+        <div style="font-size: 28px; font-weight: 800; color: var(--text-primary); font-family: 'Outfit', sans-serif;">{{ total_customers }}</div>
+        <div style="font-size: 12px; color: #059669; font-weight: 600; margin-top: 6px;">
+            <i class="fa-solid fa-arrow-trend-up"></i> 100% KYC Documented
+        </div>
+    </div>
+
+    <!-- 2. Total Accounts -->
+    <div class="stat-card" style="border-radius: 14px; padding: 20px; border: 1px solid var(--border-color); background: #ffffff; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+        <div class="stat-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Accounts</span>
+            <div style="width: 38px; height: 38px; border-radius: 10px; background: #fdf4ff; color: #c026d3; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+        </div>
+        <div style="font-size: 28px; font-weight: 800; color: var(--text-primary); font-family: 'Outfit', sans-serif;">{{ total_accounts }}</div>
+        <div style="font-size: 12px; color: #2563eb; font-weight: 600; margin-top: 6px;">
+            <i class="fa-solid fa-circle-check"></i> Core Savings & Current
+        </div>
+    </div>
+
+    <!-- 3. Total Deposits -->
+    <div class="stat-card" style="border-radius: 14px; padding: 20px; border: 1px solid var(--border-color); background: #ffffff; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+        <div class="stat-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Deposits</span>
+            <div style="width: 38px; height: 38px; border-radius: 10px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                <i class="fa-solid fa-vault"></i>
+            </div>
+        </div>
+        <div style="font-size: 24px; font-weight: 800; color: #059669; font-family: 'Outfit', sans-serif;">{{ total_deposits | format_currency }}</div>
+        <div style="font-size: 12px; color: #059669; font-weight: 600; margin-top: 6px;">
+            <i class="fa-solid fa-shield-halved"></i> Active Balance Reserve
+        </div>
+    </div>
+
+    <!-- 4. Total Withdrawals / Disbursed -->
+    <div class="stat-card" style="border-radius: 14px; padding: 20px; border: 1px solid var(--border-color); background: #ffffff; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+        <div class="stat-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Outflow</span>
+            <div style="width: 38px; height: 38px; border-radius: 10px; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                <i class="fa-solid fa-money-bill-transfer"></i>
+            </div>
+        </div>
+        <div style="font-size: 24px; font-weight: 800; color: #dc2626; font-family: 'Outfit', sans-serif;">{{ total_withdrawals | format_currency }}</div>
+        <div style="font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 6px;">
+            <i class="fa-solid fa-clock-rotate-left"></i> Today Txns: <strong>{{ today_txns }}</strong>
+        </div>
+    </div>
+
+</div>
+
+<!-- Charts Row: Monthly Transactions & Account Growth (Matches Panel 9) -->
+<div style="display: grid; grid-template-columns: 3fr 2fr; gap: 24px; margin-bottom: 24px;" class="admin-charts-grid">
+    
+    <!-- Monthly Transactions Bar / Trend Chart -->
+    <div class="card" style="padding: 22px; border-radius: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                    <i class="fa-solid fa-chart-column"></i>
+                </div>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 700;">Monthly Transactions</h3>
+            </div>
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Deposits vs Outflows</span>
+        </div>
+        <div style="height: 270px; position: relative;">
+            <canvas id="overviewChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Account Growth & Distribution Doughnut Chart -->
+    <div class="card" style="padding: 22px; border-radius: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                    <i class="fa-solid fa-chart-pie"></i>
+                </div>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 700;">Account Distribution</h3>
+            </div>
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Savings / Current</span>
+        </div>
+        <div style="height: 270px; position: relative; display: flex; align-items: center; justify-content: center;">
+            <canvas id="accountTypesChart"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<!-- Bottom Row: Pending Approvals Queue + Real-time Activity Feed (Matches Panel 9) -->
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: start;" class="admin-bottom-grid">
+    
+    <!-- Pending Approvals Action Card (Matches Panel 9) -->
+    <div class="card" style="padding: 22px; border-radius: 16px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 18px;">
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                <i class="fa-solid fa-clipboard-check"></i>
+            </div>
+            <h3 style="margin: 0; font-size: 16px; font-weight: 700;">Pending Approvals</h3>
+        </div>
+
+        <div style="display: flex; justify-content: space-around; text-align: center; padding: 18px 12px; background: #f8fafc; border-radius: 14px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+            <a href="{{ url_for('admin_loans') }}" style="text-decoration: none; color: inherit;">
+                <div style="font-size: 28px; font-weight: 900; color: #d97706; font-family: monospace;">{{ pending_loans_count }}</div>
+                <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-top: 4px;">Loans</div>
+            </a>
+            <div style="width: 1px; height: 40px; background: var(--border-color); align-self: center;"></div>
+            <a href="{{ url_for('admin_cards_approval') }}" style="text-decoration: none; color: inherit;">
+                <div style="font-size: 28px; font-weight: 900; color: #2563eb; font-family: monospace;">{{ pending_cards_count }}</div>
+                <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-top: 4px;">Cards</div>
+            </a>
+            <div style="width: 1px; height: 40px; background: var(--border-color); align-self: center;"></div>
+            <div>
+                <div style="font-size: 28px; font-weight: 900; color: #059669; font-family: monospace;">0</div>
+                <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-top: 4px;">Service Reqs</div>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <a href="{{ url_for('admin_loans') }}" class="btn btn-outline" style="justify-content: space-between; font-size: 13px; font-weight: 600;">
+                <span><i class="fa-solid fa-stamp" style="color: #d97706; margin-right: 6px;"></i> Review Loan Applications</span>
+                <span class="badge" style="background: #fef3c7; color: #b45309;">{{ pending_loans_count }} Pending</span>
+            </a>
+            <a href="{{ url_for('admin_cards_approval') }}" class="btn btn-outline" style="justify-content: space-between; font-size: 13px; font-weight: 600;">
+                <span><i class="fa-solid fa-credit-card" style="color: #2563eb; margin-right: 6px;"></i> Authorize Virtual Debit Cards</span>
+                <span class="badge" style="background: #eff6ff; color: #1e40af;">{{ pending_cards_count }} Pending</span>
+            </a>
+            <a href="{{ url_for('admin_open_account') }}" class="btn btn-primary" style="justify-content: center; font-size: 13px; font-weight: 700; margin-top: 6px;">
+                <i class="fa-solid fa-user-plus" style="margin-right: 6px;"></i> Open Customer Account
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Activity & Transactions Feed (Matches Panel 9) -->
+    <div class="card" style="padding: 22px; border-radius: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 700;">Recent Real-time Activity</h3>
+            </div>
+            <a href="{{ url_for('transaction_history') }}" class="btn btn-outline btn-sm" style="font-size: 12px;">
+                Full Ledger &rarr;
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Account</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in recent_txns %}
+                        <tr>
+                            <td style="font-size: 12px; color: var(--text-secondary); white-space: nowrap;">
+                                {{ txn.created_at.strftime('%H:%M:%S &bull; %d %b') }}
+                            </td>
+                            <td>
+                                <span style="font-family: monospace; font-weight: 700; color: var(--primary-color);">{{ txn.account.account_number }}</span>
+                                <div style="font-size: 11.5px; color: var(--text-muted);">{{ txn.account.customer.name }}</div>
+                            </td>
+                            <td>
+                                <span class="status-badge {% if txn.type == 'Deposit' %}status-approved{% elif txn.type == 'Transfer' %}badge-mode{% else %}status-inactive{% endif %}" style="font-size: 11px;">
+                                    {{ txn.type }}
+                                </span>
+                            </td>
+                            <td style="font-size: 12.5px; color: var(--text-primary); font-weight: 500;">
+                                {{ txn.description }}
+                            </td>
+                            <td style="font-weight: 800; font-size: 13.5px; white-space: nowrap; {% if txn.type == 'Deposit' %}color: #059669;{% else %}color: #dc2626;{% endif %}">
+                                {% if txn.type == 'Deposit' %}+{% else %}-{% endif %}{{ txn.amount | format_currency }}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+                                No recent activity logged.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Dynamic Charts Rendering Script -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    fetch("{{ url_for('api_admin_chart_data') }}")
+        .then(response => response.json())
+        .then(data => {
+            // 1. Monthly Transactions Bar Chart (Matches Panel 9)
+            const ctxOverview = document.getElementById('overviewChart').getContext('2d');
+            new Chart(ctxOverview, {
+                type: 'bar',
+                data: {
+                    labels: data.months,
+                    datasets: [
+                        {
+                            label: 'Deposits (₹)',
+                            data: data.deposits,
+                            backgroundColor: '#10b981',
+                            borderRadius: 6,
+                            barThickness: 18
+                        },
+                        {
+                            label: 'Withdrawals (₹)',
+                            data: data.withdrawals,
+                            backgroundColor: '#ef4444',
+                            borderRadius: 6,
+                            barThickness: 18
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { font: { family: "'Inter', sans-serif", size: 12 } }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + (value >= 100000 ? (value / 100000).toFixed(1) + 'L' : value.toLocaleString('en-IN'));
+                                }
+                            }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 2. Account Distribution Chart
+            const ctxAccounts = document.getElementById('accountTypesChart').getContext('2d');
+            new Chart(ctxAccounts, {
+                type: 'doughnut',
+                data: {
+                    labels: data.account_types,
+                    datasets: [{
+                        data: data.account_counts,
+                        backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#06b6d4', '#8b5cf6'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { family: "'Inter', sans-serif", size: 12 }, padding: 14 }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(err => console.error("Error loading chart data:", err));
+});
+</script>
+
+<style>
+@media (max-width: 1100px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    .admin-charts-grid,
+    .admin-bottom-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+@media (max-width: 600px) {
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+{% endblock %}

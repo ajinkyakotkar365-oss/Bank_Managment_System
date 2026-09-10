@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - Ajinkya Bank{% endblock %}
+
+{% block content %}
+<div class="page-title-box">
+    <div>
+        <h2 class="page-title">My Profile</h2>
+        <p class="breadcrumb">Customer Portal <span>/</span> Profile</p>
+    </div>
+</div>
+
+<div class="details-panel" style="margin-bottom: 24px;">
+    <!-- Profile Visual Display & Summary -->
+    <div class="card" style="margin-bottom: 0; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;">
+        <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 36px; font-weight: 800; border: 4px solid #ffffff; box-shadow: var(--shadow-md);">
+            {{ customer.name[:2] | upper }}
+        </div>
+        
+        <div>
+            <h3 style="font-size: 20px; font-weight: 700; color: var(--text-primary);">{{ customer.name }}</h3>
+            <span class="badge-verified" style="margin-top: 6px;"><i class="fa-solid fa-circle-check"></i> KYC Verified Customer</span>
+        </div>
+        
+        <div style="width: 100%; border-top: 1px solid var(--border-color); padding-top: 16px; text-align: left;">
+            <ul class="details-list" style="gap: 12px;">
+                <li class="details-item">
+                    <span class="details-label">Customer ID:</span>
+                    <span class="details-value">{{ customer.customer_id }}</span>
+                </li>
+                <li class="details-item">
+                    <span class="details-label">Default Account No:</span>
+                    <span class="details-value" style="font-family: monospace;">{{ primary_account.account_number if primary_account else 'N/A' }}</span>
+                </li>
+                <li class="details-item">
+                    <span class="details-label">Aadhaar (UID):</span>
+                    <span class="details-value" style="font-family: monospace;">{{ customer.aadhaar }}</span>
+                </li>
+                <li class="details-item">
+                    <span class="details-label">PAN Card:</span>
+                    <span class="details-value" style="font-family: monospace; text-transform: uppercase;">{{ customer.pan }}</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- KYC Documents View Area -->
+        {% if primary_account %}
+            <div style="width: 100%; border-top: 1px solid var(--border-color); padding-top: 16px; text-align: left;">
+                <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 10px;">
+                    <i class="fa-solid fa-folder-open text-primary"></i> KYC Documents (Duplicate Copies)
+                </span>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <a href="{{ url_for('view_customer_document', account_number=primary_account.account_number, doc_type='aadhaar_file') }}" target="_blank" class="btn btn-outline btn-sm" style="justify-content: flex-start; gap: 8px;">
+                        <i class="fa-solid fa-id-card text-primary"></i> View Aadhaar Card (Copy)
+                    </a>
+                    <a href="{{ url_for('view_customer_document', account_number=primary_account.account_number, doc_type='pan_file') }}" target="_blank" class="btn btn-outline btn-sm" style="justify-content: flex-start; gap: 8px;">
+                        <i class="fa-solid fa-credit-card" style="color: #d97706;"></i> View PAN Card (Copy)
+                    </a>
+                    <a href="{{ url_for('customer_debit_card') }}" class="btn btn-outline btn-sm" style="justify-content: flex-start; gap: 8px; border-color: #3b82f6; color: #2563eb; background: #eff6ff;">
+                        <i class="fa-solid fa-credit-card text-primary"></i> Virtual Debit Card
+                    </a>
+                    <a href="{{ url_for('customer_passbook') }}" class="btn btn-primary btn-sm" style="justify-content: center; gap: 8px; margin-top: 4px;">
+                        <i class="fa-solid fa-book-open"></i> Full Digital Passbook
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Edit Forms Column -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        <!-- Edit Profile Details -->
+        <div class="card" style="margin-bottom: 0;">
+            <div class="details-column-title">Update Contact Details</div>
+            
+            <form action="{{ url_for('customer_profile') }}" method="POST">
+                <input type="hidden" name="action" value="update_profile">
+                
+                <div class="form-grid" style="margin-bottom: 16px;">
+                    <div class="form-group">
+                        <label for="mobile">Mobile Number</label>
+                        <input type="tel" name="mobile" id="mobile" class="form-control" value="{{ customer.mobile }}" pattern="[0-9]{10}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" name="email" id="email" class="form-control" value="{{ customer.email }}" required>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="address">Residential Address</label>
+                    <input type="text" name="address" id="address" class="form-control" value="{{ customer.address }}" required>
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end;">
+                    <button type="submit" class="btn btn-primary btn-sm">Update Profile</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Change Password -->
+        <div class="card" style="margin-bottom: 0;">
+            <div class="details-column-title">Change Password</div>
+            
+            <form action="{{ url_for('customer_profile') }}" method="POST">
+                <input type="hidden" name="action" value="change_password">
+                
+                <div class="form-grid" style="margin-bottom: 16px;">
+                    <div class="form-group">
+                        <label for="old_password">Current Password</label>
+                        <input type="password" name="old_password" id="old_password" class="form-control" placeholder="Enter current password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_password">New Password</label>
+                        <input type="password" name="new_password" id="new_password" class="form-control" placeholder="Minimum 6 characters" required>
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end;">
+                    <button type="submit" class="btn btn-danger btn-sm">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

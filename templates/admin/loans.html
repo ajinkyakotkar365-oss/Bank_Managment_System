@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+
+{% block title %}Loan Approval Queue - Ajinkya Bank{% endblock %}
+
+{% block content %}
+<div class="page-title-box">
+    <div>
+        <h2 class="page-title"><i class="fa-solid fa-stamp" style="color: var(--primary-color); margin-right: 8px;"></i> Loan Approval Queue</h2>
+        <div class="breadcrumb" style="margin-top: 6px;">
+            <span>Administration</span>
+            <i class="fa-solid fa-chevron-right text-muted" style="font-size: 10px;"></i>
+            <span>Credit Risk & Underwriting</span>
+            <i class="fa-solid fa-chevron-right text-muted" style="font-size: 10px;"></i>
+            <span style="color: var(--primary-color); font-weight: 600;">Maker-Checker Authority</span>
+        </div>
+    </div>
+</div>
+
+<!-- Queue Filter Tabs (Matches Panel 8) -->
+{% set pending_loans = loans | selectattr('status', 'equalto', 'Pending') | list %}
+{% set approved_loans = loans | selectattr('status', 'equalto', 'Approved') | list %}
+{% set rejected_loans = loans | selectattr('status', 'equalto', 'Rejected') | list %}
+
+<div style="display: flex; gap: 12px; margin-bottom: 22px; border-bottom: 2px solid var(--border-color); padding-bottom: 12px;">
+    <button type="button" class="tab-btn active" onclick="filterLoanTab('pending')" id="tab-pending" style="padding: 8px 18px; border-radius: 8px; font-weight: 700; border: none; background: var(--primary-color); color: #fff; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <span>Pending Review</span>
+        <span style="background: rgba(255,255,255,0.25); padding: 2px 8px; border-radius: 12px; font-size: 12px;">{{ pending_loans | length }}</span>
+    </button>
+    <button type="button" class="tab-btn" onclick="filterLoanTab('approved')" id="tab-approved" style="padding: 8px 18px; border-radius: 8px; font-weight: 700; border: 1px solid var(--border-color); background: #ffffff; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <span>Approved Loans</span>
+        <span style="background: #ecfdf5; color: #059669; padding: 2px 8px; border-radius: 12px; font-size: 12px;">{{ approved_loans | length }}</span>
+    </button>
+    <button type="button" class="tab-btn" onclick="filterLoanTab('rejected')" id="tab-rejected" style="padding: 8px 18px; border-radius: 8px; font-weight: 700; border: 1px solid var(--border-color); background: #ffffff; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <span>Rejected</span>
+        <span style="background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 12px; font-size: 12px;">{{ rejected_loans | length }}</span>
+    </button>
+</div>
+
+<!-- Split Screen Layout: Queue Table on Left + Interactive Review Drawer on Right (Matches Panel 8) -->
+<div style="display: grid; grid-template-columns: 3fr 2fr; gap: 24px; align-items: start;" class="loan-approval-split">
+    
+    <!-- Left: Loan Queue Table -->
+    <div class="card" style="padding: 20px; border-radius: 16px;">
+        <div class="card-title" style="margin-bottom: 14px;">
+            <span>Underwriting Queue</span>
+            <span style="font-size: 13px; color: var(--text-muted); font-weight: 500;">Total: {{ loans | length }}</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Loan Type</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loan in loans %}
+                        <tr class="loan-row loan-status-{{ loan.status | lower }}" id="loan-row-{{ loan.id }}">
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 36px; height: 36px; border-radius: 50%; background: #eff6ff; color: var(--primary-color); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">
+                                        {{ loan.customer.name[:2] | upper }}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 700; font-size: 13.5px; color: var(--text-primary);">{{ loan.customer.name }}</div>
+                                        <span style="font-size: 11.5px; color: var(--text-muted); font-family: monospace;">{{ loan.loan_id }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="font-size: 13.5px; font-weight: 600;">{{ loan.loan_type }}</td>
+                            <td style="font-weight: 800; font-size: 14px; color: var(--text-primary);">{{ loan.amount | format_currency }}</td>
+                            <td>
+                                <span class="status-badge {% if loan.status == 'Approved' %}status-approved{% elif loan.status == 'Rejected' %}status-inactive{% else %}status-pending{% endif %}" style="font-size: 11.5px;">
+                                    {{ loan.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="reviewLoan({{ loan.id }}, '{{ loan.loan_id }}', '{{ loan.customer.name }}', '{{ loan.loan_type }}', '{{ loan.amount | format_currency }}', '{{ loan.duration_months }}', '{{ loan.created_at.strftime('%d %b %Y') if loan.created_at else 'Recent' }}', '{{ loan.status }}', '{{ loan.customer.mobile }}', '{{ loan.customer.pan }}')" style="padding: 4px 12px; font-size: 12px; font-weight: 600;">
+                                    Review <i class="fa-solid fa-chevron-right" style="font-size: 10px; margin-left: 4px;"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+                                No loan applications found.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Right: Interactive Underwriting Review Card (Matches Panel 8) -->
+    <div class="card" id="reviewDrawer" style="padding: 24px; border-radius: 16px; border: 2px solid #bfdbfe; background: #ffffff; position: sticky; top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--primary-color); letter-spacing: 1px;">
+                <i class="fa-solid fa-magnifying-glass"></i> Application Review
+            </span>
+            <span id="reviewStatusBadge" class="status-badge status-pending">Pending</span>
+        </div>
+
+        <!-- Customer Identity Header -->
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);">
+            <div id="reviewAvatar" style="width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #1e40af, #3b82f6); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px;">
+                RV
+            </div>
+            <div>
+                <h3 id="reviewCustomerName" style="margin: 0; font-size: 18px; font-weight: 700; color: var(--text-primary);">Rahul Verma</h3>
+                <span id="reviewLoanTypeHeader" style="font-size: 13px; color: var(--primary-color); font-weight: 600;">Home Loan</span>
+            </div>
+        </div>
+
+        <!-- Application Parameters -->
+        <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; justify-content: space-between;">
+                <span style="font-size: 13px; color: var(--text-muted);">Application ID</span>
+                <span id="reviewAppId" style="font-weight: 700; font-family: monospace; color: var(--primary-color);">LOAN10023</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="font-size: 13px; color: var(--text-muted);">Sanction Amount</span>
+                <span id="reviewAmount" style="font-weight: 800; font-size: 16px; color: var(--text-primary);">₹ 5,00,000</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="font-size: 13px; color: var(--text-muted);">Requested Tenure</span>
+                <span id="reviewTenure" style="font-weight: 700; color: var(--text-primary);">5 Years (60 Mos)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="font-size: 13px; color: var(--text-muted);">Submitted Date</span>
+                <span id="reviewDate" style="font-weight: 600; color: var(--text-secondary);">10 Apr 2026</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="font-size: 13px; color: var(--text-muted);">KYC Documents</span>
+                <span style="font-weight: 600; color: #059669;"><i class="fa-solid fa-circle-check"></i> PAN & Aadhaar Verified</span>
+            </div>
+        </div>
+
+        <!-- Maker-Checker Authority Actions (Matches Panel 8) -->
+        <div id="actionButtonGroup" style="display: flex; gap: 12px;">
+            <form id="approveForm" method="POST" action="" style="flex: 1;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); border: none; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
+                    <i class="fa-solid fa-check"></i> Approve
+                </button>
+            </form>
+            <form id="rejectForm" method="POST" action="" style="flex: 1;">
+                <button type="submit" class="btn btn-danger" style="width: 100%; padding: 12px; font-weight: 700; background: linear-gradient(135deg, #ef4444, #dc2626); border: none; box-shadow: 0 4px 12px rgba(239,68,68,0.3);" onclick="return confirm('Confirm rejection of this loan application?');">
+                    <i class="fa-solid fa-xmark"></i> Reject
+                </button>
+            </form>
+        </div>
+
+        <div id="processedNotice" style="display: none; text-align: center; padding: 12px; background: #f1f5f9; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text-muted);">
+            <i class="fa-solid fa-lock"></i> Application has already been processed.
+        </div>
+    </div>
+
+</div>
+
+<script>
+function filterLoanTab(status) {
+    // Button styling
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.style.background = '#ffffff';
+        btn.style.color = 'var(--text-secondary)';
+        btn.style.border = '1px solid var(--border-color)';
+    });
+    const activeBtn = document.getElementById('tab-' + status);
+    if (activeBtn) {
+        activeBtn.style.background = 'var(--primary-color)';
+        activeBtn.style.color = '#ffffff';
+        activeBtn.style.border = 'none';
+    }
+
+    // Rows filtering
+    document.querySelectorAll('.loan-row').forEach(row => {
+        if (status === 'all' || row.classList.contains('loan-status-' + status)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function reviewLoan(id, loanId, name, loanType, amount, duration, date, status, mobile, pan) {
+    document.getElementById('reviewCustomerName').textContent = name;
+    document.getElementById('reviewLoanTypeHeader').textContent = loanType;
+    document.getElementById('reviewAvatar').textContent = name.substring(0, 2).toUpperCase();
+    document.getElementById('reviewAppId').textContent = loanId;
+    document.getElementById('reviewAmount').textContent = amount;
+    document.getElementById('reviewTenure').textContent = (parseInt(duration) >= 12 ? Math.round(parseInt(duration) / 12) + ' Years' : duration + ' Months') + ' (' + duration + ' Mos)';
+    document.getElementById('reviewDate').textContent = date;
+    
+    const badge = document.getElementById('reviewStatusBadge');
+    badge.textContent = status;
+    badge.className = 'status-badge ' + (status === 'Approved' ? 'status-approved' : (status === 'Rejected' ? 'status-inactive' : 'status-pending'));
+
+    const approveForm = document.getElementById('approveForm');
+    const rejectForm = document.getElementById('rejectForm');
+    approveForm.action = "/admin/loans/action/" + id + "/Approved";
+    rejectForm.action = "/admin/loans/action/" + id + "/Rejected";
+
+    const btnGroup = document.getElementById('actionButtonGroup');
+    const notice = document.getElementById('processedNotice');
+    if (status === 'Pending') {
+        btnGroup.style.display = 'flex';
+        notice.style.display = 'none';
+    } else {
+        btnGroup.style.display = 'none';
+        notice.style.display = 'block';
+    }
+}
+
+// Auto-select first pending loan if available
+document.addEventListener('DOMContentLoaded', () => {
+    const firstRow = document.querySelector('.loan-row.loan-status-pending');
+    if (firstRow) {
+        const btn = firstRow.querySelector('button');
+        if (btn) btn.click();
+    }
+});
+</script>
+
+<style>
+@media (max-width: 900px) {
+    .loan-approval-split {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal - Ajinkya Bank</title>
+    <!-- Google Font & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Local CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <i class="fa-solid fa-building-columns text-primary"></i>
+                <span class="brand-text">Ajinkya <span class="brand-sub">Bank</span></span>
+            </div>
+            
+            <ul id="sidebar-menu" class="sidebar-menu">
+                <!-- Sidebar items injected by JS -->
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="user-snippet">
+                    <img src="https://api.dicebear.com/7.x/initials/svg?seed={{ session.username }}&backgroundColor=3b82f6" alt="Avatar">
+                    <div class="user-snippet-details">
+                        <span id="user-snippet-username" class="user-snippet-name">{{ session.username }}</span>
+                        <span id="user-snippet-role" class="user-snippet-role-label">Customer</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="main-wrapper">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="header-breadcrumb">
+                    <i class="fa-solid fa-home text-muted"></i>
+                    <span class="bc-sep">/</span>
+                    <span id="bc-role" class="bc-active">Customer</span>
+                    <span class="bc-sep">/</span>
+                    <span id="bc-page" class="bc-active">Dashboard</span>
+                </div>
+
+                <div class="header-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="global-search" placeholder="Quick search account, transactions...">
+                </div>
+                
+                <div class="header-actions">
+                    <!-- Demo Role Switcher -->
+                    <div class="role-switcher-container">
+                        <label for="demo-role-switcher" class="switcher-label">
+                            <i class="fa-solid fa-user-gear"></i> Demo Switcher:
+                        </label>
+                        <select id="demo-role-switcher" class="role-select">
+                            <option value="super_admin">1. Super Admin</option>
+                            <option value="cashier_teller">2. Cashier / Teller</option>
+                            <option value="customer">3. Customer</option>
+                        </select>
+                    </div>
+
+                    <!-- Notification Hub -->
+                    <div class="notification-hub" id="notification-hub-btn">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="badge badge-danger" id="notification-count">2</span>
+                    </div>
+
+                    <!-- Profile Menu -->
+                    <div class="header-profile">
+                        <span class="header-profile-name" id="navbar-profile-name">Rahul Sharma</span>
+                        <span id="navbar-role-badge" class="role-badge">Customer</span>
+                        <a href="{{ url_for('logout') }}" class="btn btn-icon-logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Body -->
+            <div class="content-body">
+                <!-- Alerts / Flashes -->
+                <div id="alert-panel" class="alert-panel"></div>
+                
+                <!-- Main Workspace View Container -->
+                <div id="portal-workspace" class="portal-workspace">
+                    <!-- Views will be dynamically loaded here by main.js based on role and active sidebar tab -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL DIALOGS -->
+
+    <!-- KYC Verification Modal -->
+    <div id="kyc-modal" class="modal-overlay">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <h3>KYC Application Verification</h3>
+                <button class="modal-close" onclick="closeKycModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="kyc-modal-body">
+                <!-- Dynamically loaded details -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Receipt Modal -->
+    <div id="receipt-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Transaction Receipt</h3>
+                <button class="modal-close" onclick="closeReceiptModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="receipt-modal-body">
+                <!-- Dynamically loaded receipt details -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Print Receipt</button>
+                <button class="btn btn-primary" onclick="closeReceiptModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Details Modal -->
+    <div id="account-detail-modal" class="modal-overlay">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <h3>Account Summary Details</h3>
+                <button class="modal-close" onclick="closeAccountDetailModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="account-detail-modal-body">
+                <!-- Dynamically loaded details -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Loan Details Modal -->
+    <div id="loan-detail-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Loan Application Details</h3>
+                <button class="modal-close" onclick="closeLoanDetailModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="loan-detail-modal-body">
+                <!-- Dynamically loaded details -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Seed variable injection from Python Flask session to JS -->
+    <script>
+        window.flaskSession = {
+            username: "{{ session.username }}",
+            role: "{{ session.role }}",
+            customerName: "{{ session.customer_name or 'Rahul Sharma' }}",
+            employeeName: "{{ session.employee_name or 'Rajesh Kumar' }}"
+        };
+    </script>
+
+    <!-- Local JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

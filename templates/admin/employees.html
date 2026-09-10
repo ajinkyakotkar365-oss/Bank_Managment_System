@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Employees List - Ajinkya Bank{% endblock %}
+
+{% block content %}
+<div class="page-title-box">
+    <div>
+        <h2 class="page-title">Employee List</h2>
+        <p class="breadcrumb">Dashboard <span>/</span> Employees</p>
+    </div>
+    <a href="{{ url_for('admin_add_employee') }}" class="btn btn-primary">
+        <i class="fa-solid fa-user-plus"></i> Add Employee
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-title">
+        <span>Active Employees</span>
+        <span class="badge" style="background-color: var(--primary-color); color: white; padding: 4px 10px; border-radius: 30px; font-size: 12px;">{{ employees | length }} Total</span>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Branch</th>
+                    <th>Mobile</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                    <tr>
+                        <td style="font-weight: 600; color: var(--primary-color);">{{ emp.employee_id }}</td>
+                        <td style="font-weight: 500;">{{ emp.name }}</td>
+                        <td>{{ emp.role }}</td>
+                        <td>{{ emp.branch.name }}</td>
+                        <td>{{ emp.mobile }}</td>
+                        <td>
+                            <span class="status-badge {% if emp.status == 'Active' %}status-approved{% else %}status-inactive{% endif %}">
+                                {{ emp.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <!-- Toggle status form -->
+                                <form action="{{ url_for('admin_toggle_employee', id=emp.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to change this employee\'s status?');">
+                                    <button type="submit" class="btn btn-sm btn-icon-only {% if emp.status == 'Active' %}btn-danger{% else %}btn-success{% endif %}" title="{% if emp.status == 'Active' %}Deactivate{% else %}Activate{% endif %}">
+                                        {% if emp.status == 'Active' %}
+                                            <i class="fa-solid fa-user-slash"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-user-check"></i>
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+                            No employees found. Click "Add Employee" to register one.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

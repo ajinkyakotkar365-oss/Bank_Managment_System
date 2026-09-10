@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block title %}Quick Transfer - Ajinkya Bank{% endblock %}
+
+{% block content %}
+<div class="page-title-box">
+    <div>
+        <h2 class="page-title"><i class="fa-solid fa-paper-plane" style="color: var(--primary-color); margin-right: 8px;"></i> Quick Transfer</h2>
+        <div class="breadcrumb" style="margin-top: 6px;">
+            <span>Internet Banking</span>
+            <i class="fa-solid fa-chevron-right text-muted" style="font-size: 10px;"></i>
+            <span>Funds Transfer</span>
+            <i class="fa-solid fa-chevron-right text-muted" style="font-size: 10px;"></i>
+            <span style="color: var(--primary-color); font-weight: 600;">Instant 24x7 IMPS / NEFT</span>
+        </div>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <a href="{{ url_for('customer_dashboard') }}" class="btn btn-outline">
+            <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Source Account Balance Indicator Banner -->
+<div class="account-hero-banner" style="margin-bottom: 24px; padding: 18px 24px; border-radius: 14px; background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%); color: #ffffff; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+    <div>
+        <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #93c5fd; display: block;">Debiting From Account</span>
+        <h3 style="margin: 4px 0 0 0; font-size: 20px; font-weight: 700;">{{ customer.name }} &bull; {{ primary_account.account_number if primary_account else 'N/A' }}</h3>
+        <span style="font-size: 12px; color: #dbeafe;"><i class="fa-solid fa-building-columns"></i> {{ primary_account.branch.name if primary_account else 'Main Branch' }} | {{ primary_account.branch.ifsc_code if primary_account else 'SBIN0011234' }}</span>
+    </div>
+    <div style="text-align: right;">
+        <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #93c5fd; display: block;">Available Balance</span>
+        <div style="font-size: 28px; font-weight: 800; font-family: monospace; letter-spacing: 0.5px;">
+            {{ (primary_account.balance if primary_account else 0) | format_currency }}
+        </div>
+    </div>
+</div>
+
+<div style="max-width: 820px; margin: 0 auto;">
+    <div class="card" style="box-shadow: 0 10px 30px rgba(0,0,0,0.08); border-radius: 16px;">
+        
+        <!-- 3-Step Flow Stepper (Matches Panel 4) -->
+        <div class="stepper-container" style="display: flex; justify-content: space-around; padding: 18px 20px; background: #f8fafc; border-bottom: 1px solid var(--border-color); border-radius: 16px 16px 0 0;">
+            <div id="step-badge-1" class="step-badge active" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--primary-color);">
+                <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary-color); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px;">1</span>
+                <span>Recipient</span>
+            </div>
+            <div style="flex: 1; height: 2px; background: #cbd5e1; align-self: center; margin: 0 12px;" id="step-line-1"></div>
+            <div id="step-badge-2" class="step-badge" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #94a3b8;">
+                <span style="width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 13px;">2</span>
+                <span>Amount</span>
+            </div>
+            <div style="flex: 1; height: 2px; background: #cbd5e1; align-self: center; margin: 0 12px;" id="step-line-2"></div>
+            <div id="step-badge-3" class="step-badge" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #94a3b8;">
+                <span style="width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 13px;">3</span>
+                <span>Confirm</span>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('customer_quick_transfer') }}" id="transferForm" style="padding: 24px;">
+            
+            <!-- STEP 1: Select Beneficiary -->
+            <div id="step-1-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <label style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin: 0;">
+                        <i class="fa-solid fa-users" style="color: var(--primary-color); margin-right: 6px;"></i> Select Beneficiary
+                    </label>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="toggleCustomAccount()" id="toggleBeneficiaryBtn">
+                        <i class="fa-solid fa-plus"></i> Enter Other Account
+                    </button>
+                </div>
+
+                <!-- Beneficiary Quick Selection Tiles -->
+                <div class="beneficiary-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; margin-bottom: 20px;">
+                    {% if other_accounts %}
+                        {% for acc in other_accounts %}
+                        <div class="beneficiary-card" onclick="selectBeneficiary('{{ acc.account_number }}', '{{ acc.customer.name }}', '{{ acc.branch.name }}')" id="ben-card-{{ acc.account_number }}" style="border: 2px solid var(--border-color); border-radius: 12px; padding: 14px; cursor: pointer; transition: all 0.2s ease; background: #ffffff;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px;">
+                                    {{ acc.customer.name[:2] | upper }}
+                                </div>
+                                <div style="overflow: hidden;">
+                                    <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">{{ acc.customer.name }}</div>
+                                    <div style="font-size: 12px; color: var(--text-muted); font-family: monospace;">A/C: {{ acc.account_number }}</div>
+                                    <div style="font-size: 11px; color: #10b981; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Verified</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="grid-column: 1 / -1; padding: 16px; background: #f8fafc; border-radius: 8px; text-align: center; color: var(--text-muted);">
+                            No pre-saved beneficiaries. Enter account number below.
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Custom Account Entry Box -->
+                <div id="customAccountBox" style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 600;">Beneficiary Account Number or Mobile</label>
+                    <div style="position: relative;">
+                        <input type="text" name="target_account" id="target_account" class="form-control" placeholder="Enter 12-digit Account No. or 10-digit Mobile" required style="padding-left: 38px; font-size: 15px; font-weight: 600; letter-spacing: 0.5px;">
+                        <i class="fa-solid fa-hashtag" style="position: absolute; left: 14px; top: 14px; color: var(--text-muted);"></i>
+                    </div>
+                    <small style="color: var(--text-muted); font-size: 12px; margin-top: 5px; display: block;">Funds will be transferred instantly with zero transaction charges via IMPS 24x7.</small>
+                </div>
+
+                <div style="text-align: right;">
+                    <button type="button" class="btn btn-primary" onclick="goToStep(2)" style="padding: 10px 24px;">
+                        Continue to Amount <i class="fa-solid fa-arrow-right" style="margin-left: 6px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Enter Amount & Remarks -->
+            <div id="step-2-content" style="display: none;">
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <span style="font-size: 12px; color: #1e40af; font-weight: 600;">Transferring to:</span>
+                        <div id="selectedBeneficiaryLabel" style="font-weight: 700; color: #1e3a8a; font-size: 15px;">Selected Account</div>
+                    </div>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="goToStep(1)" style="font-size: 12px;">
+                        <i class="fa-solid fa-pen"></i> Change
+                    </button>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="font-weight: 700; font-size: 15px;">Transfer Amount (₹)</label>
+                    <div style="position: relative;">
+                        <span style="position: absolute; left: 16px; top: 11px; font-size: 20px; font-weight: 700; color: var(--primary-color);">₹</span>
+                        <input type="number" step="0.01" min="1" max="{{ primary_account.balance if primary_account else 100000 }}" name="amount" id="amountInput" class="form-control" placeholder="0.00" required style="padding-left: 36px; font-size: 22px; font-weight: 800; color: var(--text-primary); height: 50px;">
+                    </div>
+                </div>
+
+                <!-- Quick Amount Chips (Matches Panel 4) -->
+                <div style="margin-bottom: 22px;">
+                    <span style="font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block;">Quick Amount Select</span>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" class="fast-cash-btn" onclick="setQuickAmount(500)">₹500</button>
+                        <button type="button" class="fast-cash-btn" onclick="setQuickAmount(1000)">₹1,000</button>
+                        <button type="button" class="fast-cash-btn" onclick="setQuickAmount(2000)">₹2,000</button>
+                        <button type="button" class="fast-cash-btn" onclick="setQuickAmount(5000)">₹5,000</button>
+                        <button type="button" class="fast-cash-btn" onclick="setQuickAmount(10000)">₹10,000</button>
+                        <button type="button" class="fast-cash-btn" onclick="setQuickAmount(25000)">₹25,000</button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" style="font-weight: 600;">Remarks (Optional)</label>
+                    <input type="text" name="remarks" id="remarksInput" class="form-control" placeholder="e.g. Lunch, Rent, Business Payment, Emergency" maxlength="80">
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <button type="button" class="btn btn-outline" onclick="goToStep(1)">
+                        <i class="fa-solid fa-arrow-left"></i> Back
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="goToStep(3)" style="padding: 10px 24px;">
+                        Review & Confirm <i class="fa-solid fa-arrow-right" style="margin-left: 6px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 3: Review & Final Confirmation (Matches Panel 4) -->
+            <div id="step-3-content" style="display: none;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <div style="width: 56px; height: 56px; border-radius: 50%; background: #eff6ff; color: var(--primary-color); display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 12px;">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h3 style="margin: 0; font-size: 20px; font-weight: 700;">Confirm Fund Transfer</h3>
+                    <p style="color: var(--text-secondary); font-size: 13.5px; margin: 4px 0 0 0;">Please review the transaction details carefully before initiating.</p>
+                </div>
+
+                <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px dashed var(--border-color); margin-bottom: 12px;">
+                        <span style="color: var(--text-muted); font-size: 13.5px;">Debiting Account</span>
+                        <span style="font-weight: 700; color: var(--text-primary); font-family: monospace;">{{ primary_account.account_number if primary_account else 'N/A' }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px dashed var(--border-color); margin-bottom: 12px;">
+                        <span style="color: var(--text-muted); font-size: 13.5px;">Beneficiary Details</span>
+                        <span id="confirmTargetLabel" style="font-weight: 700; color: var(--text-primary);">Account No.</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px dashed var(--border-color); margin-bottom: 12px;">
+                        <span style="color: var(--text-muted); font-size: 13.5px;">Transfer Mode</span>
+                        <span style="font-weight: 600; color: #10b981;"><i class="fa-solid fa-bolt"></i> Instant IMPS (24x7)</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px dashed var(--border-color); margin-bottom: 12px;">
+                        <span style="color: var(--text-muted); font-size: 13.5px;">Convenience Fee</span>
+                        <span style="font-weight: 600; color: #059669;">₹ 0.00 (FREE)</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px dashed var(--border-color); margin-bottom: 12px;">
+                        <span style="color: var(--text-muted); font-size: 13.5px;">Remarks</span>
+                        <span id="confirmRemarksLabel" style="font-weight: 600; color: var(--text-primary);">-</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                        <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Total Debit Amount</span>
+                        <span id="confirmAmountLabel" style="font-size: 26px; font-weight: 800; color: var(--primary-color);">₹ 0.00</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <button type="button" class="btn btn-outline" onclick="goToStep(2)">
+                        <i class="fa-solid fa-arrow-left"></i> Edit Details
+                    </button>
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 32px; font-size: 16px; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); border: none; box-shadow: 0 4px 14px rgba(16,185,129,0.3);">
+                        <i class="fa-solid fa-check-circle" style="margin-right: 6px;"></i> Confirm & Transfer
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+let selectedBeneficiaryName = '';
+
+function selectBeneficiary(accNum, name, branch) {
+    document.querySelectorAll('.beneficiary-card').forEach(c => {
+        c.style.borderColor = 'var(--border-color)';
+        c.style.background = '#ffffff';
+    });
+    
+    const card = document.getElementById('ben-card-' + accNum);
+    if (card) {
+        card.style.borderColor = 'var(--primary-color)';
+        card.style.background = '#eff6ff';
+    }
+    
+    document.getElementById('target_account').value = accNum;
+    selectedBeneficiaryName = name;
+}
+
+function toggleCustomAccount() {
+    document.querySelectorAll('.beneficiary-card').forEach(c => {
+        c.style.borderColor = 'var(--border-color)';
+        c.style.background = '#ffffff';
+    });
+    const input = document.getElementById('target_account');
+    input.value = '';
+    input.focus();
+    selectedBeneficiaryName = '';
+}
+
+function setQuickAmount(val) {
+    document.getElementById('amountInput').value = val;
+}
+
+function goToStep(step) {
+    const s1 = document.getElementById('step-1-content');
+    const s2 = document.getElementById('step-2-content');
+    const s3 = document.getElementById('step-3-content');
+    
+    const b1 = document.getElementById('step-badge-1');
+    const b2 = document.getElementById('step-badge-2');
+    const b3 = document.getElementById('step-badge-3');
+    
+    const l1 = document.getElementById('step-line-1');
+    const l2 = document.getElementById('step-line-2');
+
+    if (step === 2) {
+        const targetAcc = document.getElementById('target_account').value.trim();
+        if (!targetAcc) {
+            alert('Please select a beneficiary or enter a recipient account number.');
+            return;
+        }
+        document.getElementById('selectedBeneficiaryLabel').innerHTML = (selectedBeneficiaryName ? selectedBeneficiaryName + ' &bull; ' : '') + 'A/C: ' + targetAcc;
+    }
+
+    if (step === 3) {
+        const amt = parseFloat(document.getElementById('amountInput').value);
+        if (!amt || amt <= 0) {
+            alert('Please enter a valid transfer amount.');
+            return;
+        }
+        const targetAcc = document.getElementById('target_account').value.trim();
+        const remarks = document.getElementById('remarksInput').value.trim();
+        
+        document.getElementById('confirmTargetLabel').textContent = (selectedBeneficiaryName ? selectedBeneficiaryName + ' (' + targetAcc + ')' : targetAcc);
+        document.getElementById('confirmAmountLabel').textContent = '₹ ' + amt.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('confirmRemarksLabel').textContent = remarks || 'Quick Fund Transfer';
+    }
+
+    // Hide all
+    s1.style.display = (step === 1 ? 'block' : 'none');
+    s2.style.display = (step === 2 ? 'block' : 'none');
+    s3.style.display = (step === 3 ? 'block' : 'none');
+
+    // Update badges
+    b1.style.color = (step >= 1 ? 'var(--primary-color)' : '#94a3b8');
+    b1.querySelector('span').style.background = (step >= 1 ? 'var(--primary-color)' : '#e2e8f0');
+    b1.querySelector('span').style.color = (step >= 1 ? '#fff' : '#64748b');
+
+    b2.style.color = (step >= 2 ? 'var(--primary-color)' : '#94a3b8');
+    b2.querySelector('span').style.background = (step >= 2 ? 'var(--primary-color)' : '#e2e8f0');
+    b2.querySelector('span').style.color = (step >= 2 ? '#fff' : '#64748b');
+    l1.style.background = (step >= 2 ? 'var(--primary-color)' : '#cbd5e1');
+
+    b3.style.color = (step >= 3 ? 'var(--primary-color)' : '#94a3b8');
+    b3.querySelector('span').style.background = (step >= 3 ? 'var(--primary-color)' : '#e2e8f0');
+    b3.querySelector('span').style.color = (step >= 3 ? '#fff' : '#64748b');
+    l2.style.background = (step >= 3 ? 'var(--primary-color)' : '#cbd5e1');
+}
+</script>
+{% endblock %}

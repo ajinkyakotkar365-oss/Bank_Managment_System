@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Fund Transfer - Employee Portal{% endblock %}
+
+{% block content %}
+<div class="page-title-box">
+    <div>
+        <h2 class="page-title">Transfer Funds</h2>
+        <p class="breadcrumb">Transactions <span>/</span> Transfer</p>
+    </div>
+</div>
+
+<!-- Source Account Lookup -->
+<div class="card">
+    <div class="card-title">Search Source Account</div>
+    
+    <form action="{{ url_for('employee_transfer') }}" method="GET">
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <div class="form-group" style="flex-grow: 1;">
+                <input type="text" name="search_acc" class="form-control" placeholder="Enter sender account number or mobile number..." value="{{ search_acc or '' }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 45px;"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        </div>
+    </form>
+</div>
+
+{% if source_account %}
+    <div class="details-panel" style="margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px;">
+        <!-- Account Info Display -->
+        <div class="card" style="margin-bottom: 0; align-self: start;">
+            <div class="details-column-title" style="font-size: 15px; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">Sender Account Details</div>
+            
+            <ul class="details-list" style="list-style: none; padding: 0;">
+                <li class="details-item" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                    <span class="details-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Sender Name:</span>
+                    <span class="details-value" style="font-weight: 700; color: var(--text-primary);">{{ source_account.customer.name }}</span>
+                </li>
+                <li class="details-item" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                    <span class="details-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Account Number:</span>
+                    <span class="details-value" style="font-family: monospace; font-weight: 600;">{{ source_account.account_number }}</span>
+                </li>
+                <li class="details-item" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                    <span class="details-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Account Type:</span>
+                    <span class="details-value" style="font-weight: 500;">{{ source_account.account_type }}</span>
+                </li>
+                <li class="details-item" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                    <span class="details-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Branch Name:</span>
+                    <span class="details-value" style="font-weight: 500;">{{ source_account.branch.name }}</span>
+                </li>
+                <li class="details-item" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                    <span class="details-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Available Balance:</span>
+                    <span class="details-value" style="font-size: 16px; color: var(--success-color); font-weight: 700;">
+                        {{ source_account.balance | format_currency }}
+                    </span>
+                </li>
+                <li class="details-item" style="display: flex; justify-content: space-between; padding: 8px 0;">
+                    <span class="details-label" style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Account Status:</span>
+                    <span class="status-badge {% if source_account.status == 'Active' %}status-approved{% else %}status-inactive{% endif %}">
+                        {{ source_account.status }}
+                    </span>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Transaction Processing -->
+        <div class="card" style="margin-bottom: 0;">
+            <div class="details-column-title" style="font-size: 15px; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">Fund Transfer Form</div>
+            
+            {% if source_account.status != 'Active' %}
+                <div class="alert alert-danger" style="margin-bottom: 0; padding: 12px 16px;">
+                    <span>Cannot transfer funds from an <strong>INACTIVE</strong> account.</span>
+                </div>
+            {% else %}
+                <form action="{{ url_for('employee_transfer') }}" method="POST" id="transfer-form">
+                    <input type="hidden" name="source_account" value="{{ source_account.account_number }}">
+                    
+                    <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label for="dest_name">Recipient Full Name</label>
+                            <input type="text" name="dest_name" id="dest_name" class="form-control" placeholder="Enter recipient name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dest_mobile">Recipient Mobile Number</label>
+                            <input type="tel" name="dest_mobile" id="dest_mobile" class="form-control" placeholder="10-digit mobile number" pattern="[0-9]{10}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dest_account">Recipient Account Number</label>
+                            <input type="text" name="dest_account" id="dest_account" class="form-control" placeholder="Enter account number" required autocomplete="off">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dest_account_confirm">Confirm Account Number</label>
+                            <input type="text" id="dest_account_confirm" class="form-control" placeholder="Re-enter account number" required autocomplete="off">
+                        </div>
+                        
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label for="dest_ifsc">Recipient IFSC Code</label>
+                            <input type="text" name="dest_ifsc" id="dest_ifsc" class="form-control" placeholder="e.g. AJNK0000101" required style="text-transform: uppercase;">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="amount">Transfer Amount (₹)</label>
+                        <input type="number" step="0.01" min="1" max="{{ source_account.balance }}" name="amount" id="amount" class="form-control" placeholder="0.00" required>
+                        <span style="font-size: 11px; color: var(--text-secondary);">Max allowable: {{ source_account.balance | format_currency }}</span>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label for="remarks">Remarks / Description</label>
+                        <input type="text" name="remarks" id="remarks" class="form-control" placeholder="e.g. Online transfer bonus" value="Account Transfer">
+                    </div>
+                    
+                    <div class="form-footer" style="padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px;">
+                        <a href="{{ url_for('employee_transfer') }}" class="btn btn-secondary">Reset</a>
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-share-nodes"></i> Transfer Funds</button>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var form = document.getElementById('transfer-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                var acc = document.getElementById('dest_account').value.trim();
+                var confirmAcc = document.getElementById('dest_account_confirm').value.trim();
+                if (acc !== confirmAcc) {
+                    alert("Recipient Account Number and Confirm Account Number do not match!");
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
+    });
+    </script>
+{% elif search_acc %}
+    <div class="card" style="text-align: center; color: var(--text-secondary); padding: 40px;">
+        <i class="fa-solid fa-face-frown" style="font-size: 32px; color: var(--danger-color); margin-bottom: 12px;"></i>
+        <p>No active account exists with number or mobile: <strong>{{ search_acc }}</strong></p>
+    </div>
+{% else %}
+    <div class="card" style="text-align: center; color: var(--text-secondary); padding: 40px;">
+        <i class="fa-solid fa-share-nodes" style="font-size: 40px; color: var(--text-muted); margin-bottom: 16px;"></i>
+        <p>Please search for a sender's account above to initiate a fund transfer transaction.</p>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Bank Management System{% endblock %}</title>
+    <!-- Google Font & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Local CSS with cache-busting -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='2.0') }}">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <i class="fa-solid fa-building-columns"></i>
+                <span>Ajinkya Bank</span>
+            </div>
+
+            <ul class="sidebar-menu">
+                {% if session.role in ['admin', 'employee'] %}
+                <!-- Dashboard Link -->
+                <li class="menu-item {% if request.path == url_for('admin_dashboard') %}active{% endif %}">
+                    <a href="{{ url_for('admin_dashboard') }}" class="menu-link">
+                        <i class="fa-solid fa-house"></i> Dashboard
+                    </a>
+                </li>
+                <!-- Fast Teller Desk (Unified Console) -->
+                <li class="menu-item {% if request.path == url_for('employee_teller_desk') %}active{% endif %}">
+                    <a href="{{ url_for('employee_teller_desk') }}" class="menu-link" style="color: #38bdf8; font-weight: 700;">
+                        <i class="fa-solid fa-desktop" style="color: #38bdf8;"></i> Fast Teller Desk
+                    </a>
+                </li>
+
+                <!-- Customer Management Accordion -->
+                <li class="menu-item-dropdown {% if 'customers' in request.path %}open{% endif %}">
+                    <div class="menu-link dropdown-toggle">
+                        <i class="fa-solid fa-users"></i> Customer Management <i
+                            class="fa-solid fa-chevron-down caret"></i>
+                    </div>
+                    <ul class="submenu">
+                        <li class="submenu-item {% if request.path == url_for('admin_customers') %}active{% endif %}">
+                            <a href="{{ url_for('admin_customers') }}" class="submenu-link">
+                                All Customers
+                            </a>
+                        </li>
+                        <li
+                            class="submenu-item {% if request.path == url_for('admin_add_customer') %}active{% endif %}">
+                            <a href="{{ url_for('admin_add_customer') }}" class="submenu-link">
+                                Add Customer
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Account Management Accordion -->
+                <li class="menu-item-dropdown {% if 'accounts' in request.path %}open{% endif %}">
+                    <div class="menu-link dropdown-toggle">
+                        <i class="fa-solid fa-wallet"></i> Account Management <i
+                            class="fa-solid fa-chevron-down caret"></i>
+                    </div>
+                    <ul class="submenu">
+                        <li
+                            class="submenu-item {% if request.path == url_for('admin_accounts') and not 'success' in request.path and not 'open' in request.path %}active{% endif %}">
+                            <a href="{{ url_for('admin_accounts') }}" class="submenu-link">
+                                All Accounts
+                            </a>
+                        </li>
+                        <li
+                            class="submenu-item {% if request.path == url_for('admin_open_account') %}active{% endif %}">
+                            <a href="{{ url_for('admin_open_account') }}" class="submenu-link">
+                                Open Account
+                            </a>
+                        </li>
+                        <li class="submenu-item {% if request.path == url_for('admin_accounts') %}active{% endif %}">
+                            <a href="{{ url_for('admin_accounts') }}" class="submenu-link">
+                                Close Account
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Transactions Accordion -->
+                <li
+                    class="menu-item-dropdown {% if 'deposit' in request.path or 'withdraw' in request.path or 'transfer' in request.path or 'transactions' in request.path or 'balance' in request.path %}open{% endif %}">
+                    <div class="menu-link dropdown-toggle">
+                        <i class="fa-solid fa-money-bill-transfer"></i> Transactions <i
+                            class="fa-solid fa-chevron-down caret"></i>
+                    </div>
+                    <ul class="submenu">
+                        <li class="submenu-item {% if request.path == url_for('employee_deposit') %}active{% endif %}">
+                            <a href="{{ url_for('employee_deposit') }}" class="submenu-link">
+                                Deposit
+                            </a>
+                        </li>
+                        <li class="submenu-item {% if request.path == url_for('employee_withdraw') %}active{% endif %}">
+                            <a href="{{ url_for('employee_withdraw') }}" class="submenu-link">
+                                Withdrawal
+                            </a>
+                        </li>
+                        <li class="submenu-item {% if request.path == url_for('employee_transfer') %}active{% endif %}">
+                            <a href="{{ url_for('employee_transfer') }}" class="submenu-link">
+                                Transfer
+                            </a>
+                        </li>
+                        <li class="submenu-item {% if request.path == url_for('balance_inquiry') %}active{% endif %}">
+                            <a href="{{ url_for('balance_inquiry') }}" class="submenu-link">
+                                Balance Check
+                            </a>
+                        </li>
+                        <li
+                            class="submenu-item {% if request.path == url_for('transaction_history') %}active{% endif %}">
+                            <a href="{{ url_for('transaction_history') }}" class="submenu-link">
+                                Transaction History
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Reports Accordion -->
+                <li class="menu-item-dropdown {% if 'reports' in request.path %}open{% endif %}">
+                    <div class="menu-link dropdown-toggle">
+                        <i class="fa-solid fa-file-invoice-dollar"></i> Reports <i
+                            class="fa-solid fa-chevron-down caret"></i>
+                    </div>
+                    <ul class="submenu">
+                        <li
+                            class="submenu-item {% if request.args.get('report_type') == 'Customer Report' %}active{% endif %}">
+                            <a href="{{ url_for('admin_reports', report_type='Customer Report') }}"
+                                class="submenu-link">
+                                Customer Report
+                            </a>
+                        </li>
+                        <li
+                            class="submenu-item {% if request.args.get('report_type') == 'Monthly Account Report' %}active{% endif %}">
+                            <a href="{{ url_for('admin_reports', report_type='Monthly Account Report') }}"
+                                class="submenu-link">
+                                Account Report
+                            </a>
+                        </li>
+                        <li
+                            class="submenu-item {% if request.args.get('report_type') == 'Deposit Report' %}active{% endif %}">
+                            <a href="{{ url_for('admin_reports', report_type='Deposit Report') }}" class="submenu-link">
+                                Deposit Report
+                            </a>
+                        </li>
+                        <li
+                            class="submenu-item {% if request.args.get('report_type') == 'Withdrawal Report' %}active{% endif %}">
+                            <a href="{{ url_for('admin_reports', report_type='Withdrawal Report') }}"
+                                class="submenu-link">
+                                Withdrawal Report
+                            </a>
+                        </li>
+                        <li
+                            class="submenu-item {% if request.args.get('report_type') == 'Daily Transaction Report' %}active{% endif %}">
+                            <a href="{{ url_for('admin_reports', report_type='Daily Transaction Report') }}"
+                                class="submenu-link">
+                                Transaction Report
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Admin Special sections (Branches, Employees, Loans) - only show to admin role -->
+                {% if session.role == 'admin' %}
+                <li class="menu-item {% if request.path == url_for('admin_employees') %}active{% endif %}">
+                    <a href="{{ url_for('admin_employees') }}" class="menu-link">
+                        <i class="fa-solid fa-user-tie"></i> Employees Management
+                    </a>
+                </li>
+                <li class="menu-item {% if request.path == url_for('admin_branches') %}active{% endif %}">
+                    <a href="{{ url_for('admin_branches') }}" class="menu-link">
+                        <i class="fa-solid fa-code-branch"></i> Branches
+                    </a>
+                </li>
+                <li class="menu-item {% if request.path == url_for('admin_loans') %}active{% endif %}">
+                    <a href="{{ url_for('admin_loans') }}" class="menu-link">
+                        <i class="fa-solid fa-hand-holding-dollar"></i> Loans Approval
+                    </a>
+                </li>
+                <li class="menu-item {% if 'cards' in request.path %}active{% endif %}">
+                    <a href="{{ url_for('admin_cards_approval') }}" class="menu-link">
+                        <i class="fa-solid fa-credit-card"></i> Cards Authorization
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- Settings -->
+                <li class="menu-item {% if request.path == url_for('settings') %}active{% endif %}">
+                    <a href="{{ url_for('settings') }}" class="menu-link">
+                        <i class="fa-solid fa-gear"></i> Settings
+                    </a>
+                </li>
+
+                {% elif session.role == 'customer' %}
+                <!-- Customer Navigation -->
+                <li class="menu-item {% if request.path == url_for('customer_dashboard') %}active{% endif %}">
+                    <a href="{{ url_for('customer_dashboard') }}" class="menu-link">
+                        <i class="fa-solid fa-table-columns"></i> My Dashboard
+                    </a>
+                </li>
+                <li class="menu-item {% if request.path == url_for('customer_quick_transfer') %}active{% endif %}">
+                    <a href="{{ url_for('customer_quick_transfer') }}" class="menu-link">
+                        <i class="fa-solid fa-paper-plane"></i> Quick Transfer
+                    </a>
+                </li>
+                <li class="menu-item {% if request.path == url_for('customer_debit_card') %}active{% endif %}">
+                    <a href="{{ url_for('customer_debit_card') }}" class="menu-link">
+                        <i class="fa-solid fa-credit-card"></i> Virtual Debit Card
+                    </a>
+                </li>
+                <li class="menu-item {% if request.path == url_for('customer_passbook') %}active{% endif %}">
+                    <a href="{{ url_for('customer_passbook') }}" class="menu-link">
+                        <i class="fa-solid fa-book"></i> Passbook
+                    </a>
+                </li>
+                <li class="menu-item {% if request.path == url_for('customer_loan_apply') %}active{% endif %}">
+                    <a href="{{ url_for('customer_loan_apply') }}" class="menu-link">
+                        <i class="fa-solid fa-handshake-angle"></i> Apply for Loan
+                    </a>
+                </li>
+                <li class="menu-item {% if request.path == url_for('customer_profile') %}active{% endif %}">
+                    <a href="{{ url_for('customer_profile') }}" class="menu-link">
+                        <i class="fa-solid fa-user-gear"></i> My Profile
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="menu-item">
+                    <a href="{{ url_for('logout') }}" class="menu-link text-danger">
+                        <i class="fa-solid fa-right-from-bracket text-danger"></i> Logout
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-snippet">
+                    <div class="user-avatar-badge">
+                        {% if session.role == 'customer' and session.customer_name %}
+                        {{ session.customer_name[:2] | upper }}
+                        {% elif session.role == 'employee' and session.employee_name %}
+                        {{ session.employee_name[:2] | upper }}
+                        {% else %}
+                        AD
+                        {% endif %}
+                    </div>
+                    <div class="user-snippet-details">
+                        <span class="user-snippet-name">
+                            {% if session.role == 'customer' %}
+                            {{ session.customer_name }}
+                            {% elif session.role == 'employee' %}
+                            {{ session.employee_name }}
+                            {% else %}
+                            Administrator
+                            {% endif %}
+                        </span>
+                        <span class="user-snippet-role role-badge role-{{ session.role }}">{{ session.role }}</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-wrapper">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="header-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search account number, customers, transactions...">
+                </div>
+
+                <!-- Notification Hub (Simulated SMS Inbox Tray) -->
+                <div class="notification-hub" id="sms-notification-bell" title="Simulated SMS Inbox"
+                    style="margin-left: auto; margin-right: 20px; position: relative; cursor: pointer; font-size: 19px; color: var(--text-secondary);">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span class="badge badge-danger" id="sms-badge"
+                        style="position: absolute; top: -5px; right: -8px; font-size: 10px; padding: 2px 5px; border-radius: 50%; display: none; line-height: 1;">0</span>
+                </div>
+
+                <div class="header-profile">
+                    <div class="user-avatar-badge sm">
+                        {% if session.role == 'customer' and session.customer_name %}
+                        {{ session.customer_name[:2] | upper }}
+                        {% elif session.role == 'employee' and session.employee_name %}
+                        {{ session.employee_name[:2] | upper }}
+                        {% else %}
+                        AD
+                        {% endif %}
+                    </div>
+                    <div class="header-profile-details">
+                        <span class="header-profile-name">
+                            {% if session.role == 'customer' %}
+                            {{ session.customer_name }}
+                            {% elif session.role == 'employee' %}
+                            {{ session.employee_name }}
+                            {% else %}
+                            Administrator
+                            {% endif %}
+                        </span>
+                        <span class="role-badge role-{{ session.role }}">{{ session.role }}</span>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="btn-icon-logout" title="Logout">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Body -->
+            <div class="content-body">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button class="alert-close"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <!-- Child Content -->
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    <!-- Local JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Interactive sidebar toggles
+        document.addEventListener('DOMContentLoaded', function () {
+            const dropdownToggles = document.querySelectorAll('.sidebar .dropdown-toggle');
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const parent = this.parentElement;
+
+                    // Close other submenus first for accordion behavior
+                    document.querySelectorAll('.sidebar .menu-item-dropdown').forEach(item => {
+                        if (item !== parent) {
+                            item.classList.remove('open');
+                        }
+                    });
+
+                    parent.classList.toggle('open');
+                });
+            });
+
+            // Bind Alerts close buttons
+            document.addEventListener('click', function (e) {
+                if (e.target.closest('.alert-close')) {
+                    const alertEl = e.target.closest('.alert');
+                    if (alertEl) alertEl.remove();
+                }
+            });
+        });
+    </script>
+
+    <!-- Simulated SMS Mobile Drawer -->
+    <div id="sms-drawer" class="no-print"
+        style="position: fixed; top: 0; right: -400px; width: 380px; height: 100vh; background-color: #0f172a; border-left: 2px solid var(--border-color); box-shadow: -5px 0 25px rgba(0,0,0,0.5); z-index: 2000; transition: right 0.3s ease-in-out; display: flex; flex-direction: column; color: #ffffff;">
+        <div
+            style="padding: 20px; background-color: #1e293b; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color);">
+            <h4
+                style="font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: #3b82f6; margin: 0;">
+                <i class="fa-solid fa-mobile-screen-button"></i> Mobile SMS Inbox
+            </h4>
+            <button id="close-sms-drawer"
+                style="background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer;">&times;</button>
+        </div>
+
+        <div id="sms-messages-container"
+            style="flex-grow: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; background-color: #0b0f19;">
+            <!-- Messages populate here -->
+            <div style="text-align: center; color: #64748b; padding-top: 50px;">
+                <i class="fa-solid fa-envelope-open" style="font-size: 32px; margin-bottom: 12px; display: block;"></i>
+                No SMS alerts received yet.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var bell = document.getElementById('sms-notification-bell');
+            var drawer = document.getElementById('sms-drawer');
+            var closeBtn = document.getElementById('close-sms-drawer');
+            var container = document.getElementById('sms-messages-container');
+            var badge = document.getElementById('sms-badge');
+
+            function fetchSMSAlerts() {
+                fetch('/api/sms-alerts')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            badge.style.display = 'inline-block';
+                            badge.textContent = data.length;
+
+                            container.innerHTML = '';
+                            data.forEach(function (alert) {
+                                var msgCard = document.createElement('div');
+                                msgCard.style.backgroundColor = '#1e293b';
+                                msgCard.style.borderRadius = '8px';
+                                msgCard.style.padding = '12px 14px';
+                                msgCard.style.border = '1px solid #334155';
+                                msgCard.style.fontSize = '12.5px';
+                                msgCard.style.lineHeight = '1.5';
+                                msgCard.style.color = '#e2e8f0';
+
+                                var headerRow = document.createElement('div');
+                                headerRow.style.display = 'flex';
+                                headerRow.style.justify = 'space-between';
+                                headerRow.style.marginBottom = '6px';
+                                headerRow.style.fontSize = '10.5px';
+                                headerRow.style.color = '#3b82f6';
+                                headerRow.style.fontWeight = '700';
+
+                                headerRow.innerHTML = '<span>📲 ' + alert.mobile + '</span><span>' + alert.created_at + '</span>';
+                                msgCard.appendChild(headerRow);
+
+                                var bodyText = document.createElement('div');
+                                bodyText.textContent = alert.message;
+                                msgCard.appendChild(bodyText);
+
+                                container.appendChild(msgCard);
+                            });
+                        } else {
+                            badge.style.display = 'none';
+                            container.innerHTML = '<div style="text-align: center; color: #64748b; padding-top: 50px;"><i class="fa-solid fa-envelope-open" style="font-size: 32px; margin-bottom: 12px; display: block;"></i>No SMS alerts received yet.</div>';
+                        }
+                    })
+                    .catch(err => console.error("Error fetching SMS alerts: ", err));
+            }
+
+            if (bell) {
+                bell.addEventListener('click', function () {
+                    drawer.style.right = '0';
+                    fetchSMSAlerts();
+                });
+            }
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function () {
+                    drawer.style.right = '-400px';
+                });
+            }
+
+            // Auto-fetch alerts every 10 seconds
+            setInterval(fetchSMSAlerts, 10000);
+            // Initial fetch
+            fetchSMSAlerts();
+        });
+    </script>
+</body>
+
+</html>

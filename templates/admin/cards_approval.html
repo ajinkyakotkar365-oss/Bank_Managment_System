@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Debit Cards Authorization - Ajinkya Bank{% endblock %}
+
+{% block content %}
+<div class="page-title-box">
+    <div>
+        <h2 class="page-title">Debit Cards Authorization</h2>
+        <p class="breadcrumb">Admin Portal <span>/</span> Authority Approvals <span>/</span> Debit Cards</p>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <span class="badge-verified"><i class="fa-solid fa-shield-halved"></i> Maker-Checker Authority</span>
+    </div>
+</div>
+
+<!-- Authority Summary Stats -->
+<div class="stats-grid" style="margin-bottom: 24px;">
+    <div class="stat-card" style="border-left: 4px solid #f59e0b;">
+        <div class="stat-title">Awaiting Authority Approval</div>
+        <div class="stat-value" style="color: #d97706;">{{ pending_cards | length }}</div>
+        <div class="stat-change"><i class="fa-solid fa-clock"></i> Action Required by Officer</div>
+    </div>
+    
+    <div class="stat-card stat-green">
+        <div class="stat-title">Authorized & Active Cards</div>
+        <div class="stat-value">{{ active_cards | length }}</div>
+        <div class="stat-change"><i class="fa-solid fa-circle-check"></i> Actively in Circulation</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-title">Total Applications Processed</div>
+        <div class="stat-value">{{ total_count }}</div>
+        <div class="stat-change"><i class="fa-solid fa-credit-card"></i> RuPay Platinum Digital</div>
+    </div>
+</div>
+
+<!-- SECTION 1: Pending Authorizations Queue -->
+<div class="card" style="margin-bottom: 28px; border: 1px solid #fde68a;">
+    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #fef3c7; padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-hourglass-half" style="color: #d97706; font-size: 18px;"></i>
+            <span style="font-size: 17px; font-weight: 700; color: #92400e;">Pending Authorization Queue</span>
+            <span style="background: #fef3c7; color: #b45309; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; border: 1px solid #fde68a;">
+                {{ pending_cards | length }} Pending
+            </span>
+        </div>
+        <span style="font-size: 12px; color: var(--text-secondary);">
+            Authority: Branch Operations / KYC Compliance Officer
+        </span>
+    </div>
+
+    {% if pending_cards %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>App ID & Date</th>
+                    <th>Customer Name</th>
+                    <th>Linked Account</th>
+                    <th>Balance</th>
+                    <th>KYC Verification</th>
+                    <th>Requested Limits</th>
+                    <th style="text-align: right;">Authority Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for card in pending_cards %}
+                <tr>
+                    <td>
+                        <strong style="color: var(--primary-color);">#DC-{{ card.id + 1000 }}</strong>
+                        <div style="font-size: 11px; color: var(--text-secondary);">{{ card.applied_at.strftime('%d-%b-%Y %I:%M %p') if card.applied_at else 'N/A' }}</div>
+                    </td>
+                    <td>
+                        <strong>{{ card.cardholder_name }}</strong>
+                        <div style="font-size: 12px; color: var(--text-secondary);">Cust ID: {{ card.customer.customer_id }} &bull; {{ card.customer.mobile }}</div>
+                    </td>
+                    <td>
+                        <span class="account-chip">{{ card.account.account_number }}</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">{{ card.account.account_type }}</div>
+                    </td>
+                    <td style="font-weight: 700; color: var(--success-color);">
+                        {{ card.account.balance | format_currency }}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <a href="{{ url_for('view_customer_document', account_number=card.account.account_number, doc_type='aadhaar_file') }}" target="_blank" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 10.5px;" title="Verify Aadhaar">
+                                <i class="fa-solid fa-id-card text-primary"></i> Aadhaar
+                            </a>
+                            <a href="{{ url_for('view_customer_document', account_number=card.account.account_number, doc_type='pan_file') }}" target="_blank" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 10.5px;" title="Verify PAN">
+                                <i class="fa-solid fa-credit-card" style="color: #d97706;"></i> PAN
+                            </a>
+                        </div>
+                    </td>
+                    <td style="font-size: 12px;">
+                        <div>ATM: <strong>₹{{ "{:,.0f}".format(card.daily_atm_limit) }}</strong></div>
+                        <div>POS: <strong>₹{{ "{:,.0f}".format(card.daily_pos_limit) }}</strong></div>
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; gap: 8px; justify-content: flex-end;">
+                            <form action="{{ url_for('admin_card_action', id=card.id, action='Approve') }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-success btn-sm" style="display: inline-flex; align-items: center; gap: 6px;" onclick="return confirm('Authorize and issue RuPay Platinum Virtual Debit Card for {{ card.cardholder_name }}?');">
+                                    <i class="fa-solid fa-shield-check"></i> Authorize & Issue
+                                </button>
+                            </form>
+                            <form action="{{ url_for('admin_card_action', id=card.id, action='Reject') }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center; gap: 6px;" onclick="return confirm('Reject this card application?');">
+                                    <i class="fa-solid fa-xmark"></i> Reject
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="padding: 32px; text-align: center; color: var(--text-secondary);">
+        <i class="fa-solid fa-circle-check" style="font-size: 36px; color: #10b981; margin-bottom: 12px; display: block;"></i>
+        <strong>All Caught Up!</strong> No debit card applications awaiting authority review.
+    </div>
+    {% endif %}
+</div>
+
+<!-- SECTION 2: Active & Authorized Cards -->
+<div class="card">
+    <div class="card-title">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-credit-card text-primary"></i>
+            <span>Authorized & Issued Cards Registry</span>
+        </div>
+        <span class="badge-verified"><i class="fa-solid fa-lock"></i> Bank Central Authority Registered</span>
+    </div>
+
+    {% if active_cards %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Cardholder</th>
+                    <th>Account #</th>
+                    <th>Masked Card #</th>
+                    <th>Status</th>
+                    <th>Authority Approval Details</th>
+                    <th>Channels</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in active_cards %}
+                <tr>
+                    <td>
+                        <strong>{{ c.cardholder_name }}</strong>
+                        <div style="font-size: 11px; color: var(--text-secondary);">Cust ID: {{ c.customer.customer_id }}</div>
+                    </td>
+                    <td>
+                        <span class="account-chip">{{ c.account.account_number }}</span>
+                    </td>
+                    <td>
+                        <strong style="font-family: monospace; letter-spacing: 1px;">
+                            •••• &nbsp;•••• &nbsp;•••• &nbsp;{{ c.account.account_number[-4:] }}
+                        </strong>
+                        <div style="font-size: 10.5px; color: var(--text-secondary);">Exp: {{ c.expiry_month }}/{{ c.expiry_year[-2:] }}</div>
+                    </td>
+                    <td>
+                        <span class="status-badge {% if c.status == 'Active' %}status-approved{% elif c.status == 'Frozen' %}status-inactive{% else %}status-danger{% endif %}">
+                            &bull; {{ c.status }}
+                        </span>
+                    </td>
+                    <td style="font-size: 11.5px;">
+                        <div style="font-weight: 700; color: #1e3a8a;"><i class="fa-solid fa-stamp" style="color: #2563eb;"></i> {{ c.authorized_by or 'System Authority' }}</div>
+                        <div style="color: var(--text-secondary);">Ref: <span style="font-family: monospace;">{{ c.approval_ref or 'AUTH-REF-MIG' }}</span></div>
+                        <div style="color: var(--text-secondary); font-size: 10.5px;">{{ c.authorized_at.strftime('%d-%b-%Y %I:%M %p') if c.authorized_at else 'Active' }}</div>
+                    </td>
+                    <td style="font-size: 11px;">
+                        <span style="color: {% if c.is_online_enabled %}#10b981{% else %}#94a3b8{% endif %}; font-weight: 600;">E-Com: {% if c.is_online_enabled %}ON{% else %}OFF{% endif %}</span> &bull;
+                        <span style="color: {% if c.is_contactless_enabled %}#10b981{% else %}#94a3b8{% endif %}; font-weight: 600;">NFC: {% if c.is_contactless_enabled %}ON{% else %}OFF{% endif %}</span>
+                    </td>
+                    <td style="text-align: right;">
+                        <a href="{{ url_for('admin_view_debit_card', account_number=c.account.account_number) }}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-eye"></i> View Card 3D
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="padding: 24px; text-align: center; color: var(--text-secondary);">
+        No active cards in registry yet.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

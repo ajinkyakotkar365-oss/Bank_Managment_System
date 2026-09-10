@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Account Created Successfully - Bank Management System{% endblock %}
+
+{% block content %}
+<style>
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        #print-area, #print-area * {
+            visibility: visible;
+        }
+        #print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+            margin: 0;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+
+<div class="page-title-box no-print">
+    <div>
+        <h2 class="page-title">Account Created</h2>
+        <p class="breadcrumb">Accounts <span>/</span> Create New Account <span>/</span> Success</p>
+    </div>
+</div>
+
+<div class="card" id="print-area" style="max-width: 600px; margin: 40px auto; padding: 40px; text-align: center; border-top: 5px solid var(--success-color);">
+    <!-- Success Badge -->
+    <div style="width: 72px; height: 72px; background: var(--success-bg); color: var(--success-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; font-size: 32px; box-shadow: 0 0 0 10px rgba(16, 185, 129, 0.1);">
+        <i class="fa-solid fa-check"></i>
+    </div>
+    
+    <h3 style="font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Account Created Successfully</h3>
+    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 32px;">The customer profile and banking account have been successfully provisioned.</p>
+    
+    <!-- Account Details Table -->
+    <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; margin-bottom: 32px; text-align: left;">
+        <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 12px;">
+            <span style="color: var(--text-secondary); font-size: 13px; font-weight: 500;">Account Number :</span>
+            <span style="color: var(--text-primary); font-size: 15px; font-weight: 700; font-family: monospace; letter-spacing: 0.5px;">{{ account.account_number }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 12px;">
+            <span style="color: var(--text-secondary); font-size: 13px; font-weight: 500;">Customer Name :</span>
+            <span style="color: var(--text-primary); font-size: 15px; font-weight: 600;">{{ account.customer.name }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 12px;">
+            <span style="color: var(--text-secondary); font-size: 13px; font-weight: 500;">Account Type :</span>
+            <span style="color: var(--text-primary); font-size: 15px; font-weight: 600;">{{ account.account_type }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-secondary); font-size: 13px; font-weight: 500;">Initial Balance :</span>
+            <span style="color: var(--success-color); font-size: 15px; font-weight: 700;">{{ account.balance | format_currency }}</span>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="no-print" style="display: flex; gap: 12px; justify-content: center;">
+        <button onclick="window.print()" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-print"></i> Print Account Details
+        </button>
+        <a href="{{ url_for('admin_customers') }}" class="btn btn-primary">
+            Back to Customers
+        </a>
+    </div>
+</div>
+{% endblock %}
